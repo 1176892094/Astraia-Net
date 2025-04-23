@@ -20,9 +20,9 @@ namespace Astraia.Net
         private readonly Dictionary<string, Room> rooms = new Dictionary<string, Room>();
         private readonly Dictionary<int, Room> clients = new Dictionary<int, Room>();
         private readonly HashSet<int> connections = new HashSet<int>();
-        private readonly Astraia.Transport transport;
+        private readonly Transport transport;
 
-        public Process(Astraia.Transport transport)
+        public Process(Transport transport)
         {
             this.transport = transport;
         }
@@ -113,7 +113,7 @@ namespace Astraia.Net
 
                     rooms.Add(id, room);
                     clients.Add(clientId, room);
-                    Log.Info(Service.Text.Format("客户端 {0} 创建房间。 房间名称: {1} 房间数: {2} 连接数: {3}", clientId, room.roomName, rooms.Count, clients.Count));
+                    Logs.Info(Service.Text.Format("客户端 {0} 创建房间。 房间名称: {1} 房间数: {2} 连接数: {3}", clientId, room.roomName, rooms.Count, clients.Count));
 
                     using var setter = MemorySetter.Pop();
                     setter.SetByte((byte)OpCodes.CreateRoom);
@@ -128,7 +128,7 @@ namespace Astraia.Net
                     {
                         room.clients.Add(clientId);
                         clients.Add(clientId, room);
-                        Log.Info(Service.Text.Format("客户端 {0} 加入房间。 房间名称: {1} 房间数: {2} 连接数: {3}", clientId, room.roomName, rooms.Count, clients.Count));
+                        Logs.Info(Service.Text.Format("客户端 {0} 加入房间。 房间名称: {1} 房间数: {2} 连接数: {3}", clientId, room.roomName, rooms.Count, clients.Count));
 
                         using var setter = MemorySetter.Pop();
                         setter.SetByte((byte)OpCodes.JoinRoom);
@@ -165,7 +165,7 @@ namespace Astraia.Net
                     {
                         if (message.Count > transport.SendLength(channel))
                         {
-                            Log.Warn(Service.Text.Format("接收消息大小过大！消息大小: {0}", message.Count));
+                            Logs.Warn(Service.Text.Format("接收消息大小过大！消息大小: {0}", message.Count));
                             ServerDisconnect(clientId);
                             return;
                         }
@@ -229,7 +229,7 @@ namespace Astraia.Net
             }
             catch (Exception e)
             {
-                Log.Error(e.ToString());
+                Logs.Error(e.ToString());
                 transport.StopClient(clientId);
             }
         }

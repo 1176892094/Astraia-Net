@@ -75,7 +75,7 @@ namespace Astraia
             {
                 if (error != Error.DnsResolve && error != Error.Timeout)
                 {
-                    Log.Warn(Service.Text.Format("客户端: {0}  错误代码: {1}\n{2}", clientId, error, message));
+                    Logs.Warn(Service.Text.Format("客户端: {0}  错误代码: {1}\n{2}", clientId, error, message));
                 }
             }
 

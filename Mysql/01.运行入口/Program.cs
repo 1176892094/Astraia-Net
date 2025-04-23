@@ -29,34 +29,34 @@ namespace Astraia.Net
 
         private void StartServer()
         {
-            Log.Info = Info;
-            Log.Warn = Warn;
-            Log.Error = Error;
+            Logs.Info = Info;
+            Logs.Warn = Warn;
+            Logs.Error = Error;
             try
             {
-                Log.Info("运行服务器...");
+                Logs.Info("运行服务器...");
                 if (!File.Exists("service.json"))
                 {
                     var contents = JsonConvert.SerializeObject(new Setting(), Formatting.Indented);
                     File.WriteAllText("service.json", contents);
-                    Log.Warn("请将 service.json 文件配置正确并重新运行。");
+                    Logs.Warn("请将 service.json 文件配置正确并重新运行。");
                     Console.ReadKey();
                     Environment.Exit(0);
                     return;
                 }
 
                 Setting = JsonConvert.DeserializeObject<Setting>(File.ReadAllText("service.json"));
-                Log.Info("加载程序集...");
+                Logs.Info("加载程序集...");
                 Assembly.LoadFile(Path.GetFullPath("Astraia.dll"));
                 Assembly.LoadFile(Path.GetFullPath("Astraia.Kcp.dll"));
 
-                Log.Info("开始进行传输...");
+                Logs.Info("开始进行传输...");
                 if (Setting.UseEndPoint)
                 {
-                    Log.Info("开启REST服务...");
+                    Logs.Info("开启REST服务...");
                     if (!RestUtility.StartServer(Setting.RestPort))
                     {
-                        Log.Error("请以管理员身份运行或检查端口是否被占用。");
+                        Logs.Error("请以管理员身份运行或检查端口是否被占用。");
                     }
                 }
 
@@ -64,7 +64,7 @@ namespace Astraia.Net
             }
             catch (Exception e)
             {
-                Log.Error(e.ToString());
+                Logs.Error(e.ToString());
                 Console.ReadKey();
                 Environment.Exit(0);
             }
@@ -127,14 +127,14 @@ namespace Astraia.Net
                     }
 
                     watch.Stop();
-                    Log.Info($"用户 {response.userId} 数据更新成功。耗时 {(float)watch.ElapsedMilliseconds / 1000} 秒");
+                    Logs.Info($"用户 {response.userId} 数据更新成功。耗时 {(float)watch.ElapsedMilliseconds / 1000} 秒");
                 }
 
                 return JsonConvert.SerializeObject(response);
             }
             catch (Exception e)
             {
-                Log.Error(e.Message);
+                Logs.Error(e.Message);
                 response.errorCode = 2;
                 return JsonConvert.SerializeObject(response);
             }
@@ -151,7 +151,7 @@ namespace Astraia.Net
             {
                 if (dataTable.loginTime > DateTime.Parse(request.settingManager.loginTime))
                 {
-                    Log.Error($"用户 {dataTable.userId} 数据更新失败！");
+                    Logs.Error($"用户 {dataTable.userId} 数据更新失败！");
                     response.errorCode = 1;
                 }
 

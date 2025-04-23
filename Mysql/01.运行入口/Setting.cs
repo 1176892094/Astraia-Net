@@ -24,7 +24,7 @@ namespace Astraia.Net
         /// <summary>
         /// 数据库
         /// </summary>
-        public string Database = "Forest";
+        public string Database = "Database";
         
         /// <summary>
         /// 用户名
@@ -34,7 +34,7 @@ namespace Astraia.Net
         /// <summary>
         /// 密码
         /// </summary>
-        public string Password = "jinyijie";
+        public string Password = "123456";
 
         /// <summary>
         /// Rest服务器端口
