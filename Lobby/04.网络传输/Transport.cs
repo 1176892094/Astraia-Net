@@ -93,7 +93,7 @@ namespace Astraia
 
         public int SendLength(int channel)
         {
-            return channel == Channel.Reliable ? Agent.ReliableSize(maxUnit, receiveWindow) : Agent.UnreliableSize(maxUnit);
+            return channel == Channel.Reliable ? Kcp.ReliableSize(maxUnit, receiveWindow) : Kcp.UnreliableSize(maxUnit);
         }
 
         public void StartServer()
