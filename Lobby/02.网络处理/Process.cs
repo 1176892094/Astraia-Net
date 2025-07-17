@@ -33,7 +33,7 @@ namespace Astraia.Net
         {
             connections.Add(clientId);
             using var writer = MemoryWriter.Pop();
-            writer.SetByte((byte)OpCodes.Connect);
+            writer.WriteByte((byte)OpCodes.Connect);
             transport.SendToClient(clientId, writer);
         }
 
@@ -45,7 +45,7 @@ namespace Astraia.Net
                 if (room.clientId == clientId) // 主机断开
                 {
                     using var writer = MemoryWriter.Pop();
-                    writer.SetByte((byte)OpCodes.LeaveRoom);
+                    writer.WriteByte((byte)OpCodes.LeaveRoom);
                     foreach (var client in room.clients)
                     {
                         transport.SendToClient(client, writer);
@@ -61,8 +61,8 @@ namespace Astraia.Net
                 if (room.clients.Remove(clientId)) // 客户端断开
                 {
                     using var writer = MemoryWriter.Pop();
-                    writer.SetByte((byte)OpCodes.KickRoom);
-                    writer.SetInt(clientId);
+                    writer.WriteByte((byte)OpCodes.KickRoom);
+                    writer.WriteInt(clientId);
                     transport.SendToClient(room.clientId, writer);
                     clients.Remove(clientId);
                     break;
@@ -75,16 +75,16 @@ namespace Astraia.Net
             try
             {
                 using var reader = MemoryReader.Pop(segment);
-                var opcode = (OpCodes)reader.GetByte();
+                var opcode = (OpCodes)reader.ReadByte();
                 if (opcode == OpCodes.Connected)
                 {
                     if (connections.Contains(clientId))
                     {
-                        var serverKey = reader.GetString();
+                        var serverKey = reader.ReadString();
                         if (serverKey == Program.Setting.ServerKey)
                         {
                             using var writer = MemoryWriter.Pop();
-                            writer.SetByte((byte)OpCodes.Connected);
+                            writer.WriteByte((byte)OpCodes.Connected);
                             transport.SendToClient(clientId, writer);
                         }
 
@@ -104,10 +104,10 @@ namespace Astraia.Net
                     {
                         roomId = id,
                         clientId = clientId,
-                        roomName = reader.GetString(),
-                        roomData = reader.GetString(),
-                        maxCount = reader.GetInt(),
-                        roomMode = reader.GetByte(),
+                        roomName = reader.ReadString(),
+                        roomData = reader.ReadString(),
+                        maxCount = reader.ReadInt(),
+                        roomMode = reader.ReadByte(),
                         clients = new HashSet<int>(),
                     };
 
@@ -116,14 +116,14 @@ namespace Astraia.Net
                     Logs.Info(Service.Text.Format("客户端 {0} 创建房间。 房间名称: {1} 房间数: {2} 连接数: {3}", clientId, room.roomName, rooms.Count, clients.Count));
 
                     using var writer = MemoryWriter.Pop();
-                    writer.SetByte((byte)OpCodes.CreateRoom);
-                    writer.SetString(room.roomId);
+                    writer.WriteByte((byte)OpCodes.CreateRoom);
+                    writer.WriteString(room.roomId);
                     transport.SendToClient(clientId, writer);
                 }
                 else if (opcode == OpCodes.JoinRoom)
                 {
                     ServerDisconnect(clientId);
-                    var roomId = reader.GetString();
+                    var roomId = reader.ReadString();
                     if (rooms.TryGetValue(roomId, out var room) && room.clients.Count + 1 < room.maxCount)
                     {
                         room.clients.Add(clientId);
@@ -131,15 +131,15 @@ namespace Astraia.Net
                         Logs.Info(Service.Text.Format("客户端 {0} 加入房间。 房间名称: {1} 房间数: {2} 连接数: {3}", clientId, room.roomName, rooms.Count, clients.Count));
 
                         using var writer = MemoryWriter.Pop();
-                        writer.SetByte((byte)OpCodes.JoinRoom);
-                        writer.SetInt(clientId);
+                        writer.WriteByte((byte)OpCodes.JoinRoom);
+                        writer.WriteInt(clientId);
                         transport.SendToClient(clientId, writer);
                         transport.SendToClient(room.clientId, writer);
                     }
                     else
                     {
                         using var writer = MemoryWriter.Pop();
-                        writer.SetByte((byte)OpCodes.LeaveRoom);
+                        writer.WriteByte((byte)OpCodes.LeaveRoom);
                         transport.SendToClient(clientId, writer);
                     }
                 }
@@ -147,10 +147,10 @@ namespace Astraia.Net
                 {
                     if (clients.TryGetValue(clientId, out var room))
                     {
-                        room.roomName = reader.GetString();
-                        room.roomData = reader.GetString();
-                        room.roomMode = reader.GetByte();
-                        room.maxCount = reader.GetInt();
+                        room.roomName = reader.ReadString();
+                        room.roomData = reader.ReadString();
+                        room.roomMode = reader.ReadByte();
+                        room.maxCount = reader.ReadInt();
                     }
                 }
                 else if (opcode == OpCodes.LeaveRoom)
@@ -159,8 +159,8 @@ namespace Astraia.Net
                 }
                 else if (opcode == OpCodes.UpdateData)
                 {
-                    var message = reader.GetArraySegment();
-                    var targetId = reader.GetInt();
+                    var message = reader.ReadArraySegment();
+                    var targetId = reader.ReadInt();
                     if (clients.TryGetValue(clientId, out var room) && room != null)
                     {
                         if (message.Count > transport.SendLength(channel))
@@ -175,31 +175,31 @@ namespace Astraia.Net
                             if (room.clients.Contains(targetId))
                             {
                                 using var writer = MemoryWriter.Pop();
-                                writer.SetByte((byte)OpCodes.UpdateData);
-                                writer.SetArraySegment(message);
+                                writer.WriteByte((byte)OpCodes.UpdateData);
+                                writer.WriteArraySegment(message);
                                 transport.SendToClient(targetId, writer, channel);
                             }
                         }
                         else
                         {
                             using var writer = MemoryWriter.Pop();
-                            writer.SetByte((byte)OpCodes.UpdateData);
-                            writer.SetArraySegment(message);
-                            writer.SetInt(clientId);
+                            writer.WriteByte((byte)OpCodes.UpdateData);
+                            writer.WriteArraySegment(message);
+                            writer.WriteInt(clientId);
                             transport.SendToClient(room.clientId, writer, channel);
                         }
                     }
                 }
                 else if (opcode == OpCodes.KickRoom)
                 {
-                    var targetId = reader.GetInt();
+                    var targetId = reader.ReadInt();
                     var copies = rooms.Values.ToList();
                     foreach (var room in copies)
                     {
                         if (room.clientId == targetId) // 踢掉的是主机
                         {
                             using var writer = MemoryWriter.Pop();
-                            writer.SetByte((byte)OpCodes.LeaveRoom);
+                            writer.WriteByte((byte)OpCodes.LeaveRoom);
                             foreach (var client in room.clients)
                             {
                                 transport.SendToClient(client, writer);
@@ -217,8 +217,8 @@ namespace Astraia.Net
                             if (room.clients.Remove(targetId))
                             {
                                 using var writer = MemoryWriter.Pop();
-                                writer.SetByte((byte)OpCodes.KickRoom);
-                                writer.SetInt(targetId);
+                                writer.WriteByte((byte)OpCodes.KickRoom);
+                                writer.WriteInt(targetId);
                                 transport.SendToClient(room.clientId, writer);
                                 clients.Remove(targetId);
                                 break;
