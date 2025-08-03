@@ -22,10 +22,8 @@ namespace Astraia.Net
         public int process; // 后处理
         public int quality; // 画质
         public int joystick; // 摇杆设置
-        public int frameRate; // 帧数
         public int screenRate; // 分辨率
         public string version; // 当前版本
-        public string platform; // 操作系统
         public List<int> handbook; // 图鉴物品
         public List<string> addresses; // 存储地址
         public int modifyData; // 修改数据
@@ -45,7 +43,7 @@ namespace Astraia.Net
         public string playerName;
         public int modifyData;
         public int playerType;
-        public int playerLevel;
+        public int experience;
         public int coinCache;
         public int coinCount;
         public int woodCache;
