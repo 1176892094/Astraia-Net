@@ -113,7 +113,7 @@ namespace Astraia.Net
 
                     rooms.Add(id, room);
                     clients.Add(clientId, room);
-                    Logs.Info(Service.Text.Format("客户端 {0} 创建房间。 房间名称: {1} 房间数: {2} 连接数: {3}", clientId, room.roomName, rooms.Count, clients.Count));
+                    Logs.Info("客户端 {0} 创建房间。 房间名称: {1} 房间数: {2} 连接数: {3}".Format( clientId, room.roomName, rooms.Count, clients.Count));
 
                     using var writer = MemoryWriter.Pop();
                     writer.WriteByte((byte)OpCodes.CreateRoom);
@@ -128,7 +128,7 @@ namespace Astraia.Net
                     {
                         room.clients.Add(clientId);
                         clients.Add(clientId, room);
-                        Logs.Info(Service.Text.Format("客户端 {0} 加入房间。 房间名称: {1} 房间数: {2} 连接数: {3}", clientId, room.roomName, rooms.Count, clients.Count));
+                        Logs.Info(("客户端 {0} 加入房间。 房间名称: {1} 房间数: {2} 连接数: {3}".Format(clientId, room.roomName, rooms.Count, clients.Count)));
 
                         using var writer = MemoryWriter.Pop();
                         writer.WriteByte((byte)OpCodes.JoinRoom);
@@ -165,7 +165,7 @@ namespace Astraia.Net
                     {
                         if (message.Count > transport.SendLength(channel))
                         {
-                            Logs.Warn(Service.Text.Format("接收消息大小过大！消息大小: {0}", message.Count));
+                            Logs.Warn("接收消息大小过大！消息大小: {0}".Format(message.Count));
                             ServerDisconnect(clientId);
                             return;
                         }

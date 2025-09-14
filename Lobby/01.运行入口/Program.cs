@@ -53,10 +53,10 @@ namespace Astraia.Net
                 Logs.Info("加载程序集...");
                 Assembly.LoadFile(Path.GetFullPath("Astraia.dll"));
                 Assembly.LoadFile(Path.GetFullPath("Astraia.Kcp.dll"));
-                
+
                 Logs.Info("初始化传输类...");
                 Process = new Process(transport);
-                
+
                 transport.port = Setting.RestPort;
                 transport.OnServerConnect = Process.ServerConnect;
                 transport.OnServerReceive = Process.ServerReceive;
@@ -89,19 +89,19 @@ namespace Astraia.Net
             void Info(string message)
             {
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine(Service.Text.Format("[{0}] {1}", DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
+                Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
             }
 
             void Warn(string message)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine(Service.Text.Format("[{0}] {1}", DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
+                Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
             }
 
             void Error(string message)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(Service.Text.Format("[{0}] {1}", DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
+                Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
             }
         }
     }

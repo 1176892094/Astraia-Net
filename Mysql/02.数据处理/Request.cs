@@ -73,7 +73,7 @@ namespace Astraia.Net
 
             void ConfigureServer(IRestServer server)
             {
-                server.Prefixes.Add(Service.Text.Format("http://*:{0}/", port));
+                server.Prefixes.Add("http://*:{0}/".Format(port));
             }
         }
     }
