@@ -11,6 +11,7 @@
 
 using System;
 using System.IO;
+using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -64,14 +65,7 @@ namespace Astraia.Net
                 transport.StartServer();
 
                 Logs.Info("开始进行传输...");
-                if (Setting.UseEndPoint)
-                {
-                    Logs.Info("开启REST服务...");
-                    if (!RestUtility.StartServer(Setting.RestPort))
-                    {
-                        Logs.Error("请以管理员身份运行或检查端口是否被占用。");
-                    }
-                }
+                RoomRequest();
             }
             catch (Exception e)
             {
@@ -79,6 +73,7 @@ namespace Astraia.Net
                 Console.ReadKey();
                 Environment.Exit(0);
             }
+
 
             while (true)
             {
@@ -103,6 +98,49 @@ namespace Astraia.Net
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
             }
+        }
+
+        private void RoomRequest()
+        {
+            Task.Run(async () =>
+            {
+                var service = new HttpListener();
+                service.Prefixes.Add("http://*:{0}/".Format(Setting.RestPort));
+                service.Start();
+                while (true)
+                {
+                    var context = await service.GetContextAsync(); // 异步等待请求
+                    HandleRequest(context);
+                }
+            });
+        }
+
+        private static void HandleRequest(HttpListenerContext context)
+        {
+            Task.Run(async () => // 每个请求单独处理
+            {
+                var request = context.Request;
+                var response = context.Response;
+                if (request.HttpMethod == "Get" && request.Url.AbsolutePath == "/api/compressed/servers")
+                {
+                    if (Setting.RequestRoom)
+                    {
+                        var json = JsonConvert.SerializeObject(Process.roomData);
+                        json = Service.Zip.Compress(json);
+                        var buffer = Service.Text.GetBytes(json);
+                        response.StatusCode = (int)HttpStatusCode.OK;
+                        response.ContentType = "text/plain; charset=utf-8";
+                        response.ContentLength64 = buffer.Length;
+                        await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                    }
+                    else
+                    {
+                        response.StatusCode = (int)HttpStatusCode.Forbidden;
+                    }
+                }
+
+                response.OutputStream.Close();
+            });
         }
     }
 }

@@ -35,10 +35,5 @@ namespace Astraia.Net
         /// 是否请求服务器列表
         /// </summary>
         public bool RequestRoom = true;
-
-        /// <summary>
-        /// 是否启用Rest服务
-        /// </summary>
-        public bool UseEndPoint = true;
     }
 }
