@@ -76,10 +76,10 @@ namespace Astraia.Net
                 }
             }
 
-            var query = $"DELETE FROM {typeof(T).Name} WHERE {primaryKey} = @{primaryKey}";
+            var query = "DELETE FROM {0} WHERE {1} = @{1}".Format(typeof(T).Name, primaryKey);
             var parameters = new Dictionary<string, object>
             {
-                { $"@{primaryKey}", primaryValue }
+                { "@{0}".Format(primaryKey), primaryValue }
             };
 
             return proxy.ExecuteNonQuery(query, parameters);
@@ -98,10 +98,10 @@ namespace Astraia.Net
                 }
             }
 
-            var query = $"SELECT {string.Join(", ", columns)} FROM {typeof(T).Name}";
+            var query = "SELECT {0} FROM {1}".Format(string.Join(", ", columns), typeof(T).Name);
             if (!string.IsNullOrEmpty(clause))
             {
-                query += $" WHERE {clause}";
+                query += " WHERE {0}".Format(clause);
             }
 
             var results = new List<T>();
@@ -127,18 +127,18 @@ namespace Astraia.Net
 
         public static int Insert<T>(Command proxy, Dictionary<string, object> parameters)
         {
-            var inserts = parameters.Keys.Select(field => $"@{field}").ToList();
-            var query = $"INSERT INTO {typeof(T).Name} ({string.Join(", ", parameters.Keys)}) VALUES ({string.Join(", ", inserts)})";
-            parameters = parameters.ToDictionary(pair => $"@{pair.Key}", pair => pair.Value);
+            var inserts = parameters.Keys.Select(field => "@{0}".Format(field)).ToList();
+            var query = "INSERT INTO {0} ({1}) VALUES ({2})".Format(typeof(T).Name, string.Join(", ", parameters.Keys), string.Join(", ", inserts));
+            parameters = parameters.ToDictionary(pair => "@{0}".Format(pair.Key), pair => pair.Value);
             return proxy.ExecuteNonQuery(query, parameters);
         }
 
         public static int Update<T>(Command proxy, KeyValuePair<string, object> parameter, Dictionary<string, object> parameters)
         {
-            var updates = parameters.Keys.Select(field => $"{field} = @{field}").ToList();
-            var query = $"UPDATE {typeof(T).Name} SET {string.Join(", ", updates)} WHERE {parameter.Key} = @{parameter.Key}";
+            var updates = parameters.Keys.Select(field => "{0} = @{0}".Format(field)).ToList();
+            var query = "UPDATE {0} SET {1} WHERE {2} = @{2}".Format(typeof(T).Name, string.Join(", ", updates), parameter.Key);
             parameters.Add(parameter.Key, parameter.Value);
-            parameters = parameters.ToDictionary(pair => $"@{pair.Key}", pair => pair.Value);
+            parameters = parameters.ToDictionary(pair => "@{0}".Format(pair.Key), pair => pair.Value);
             return proxy.ExecuteNonQuery(query, parameters);
         }
     }

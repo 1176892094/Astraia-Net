@@ -15,13 +15,13 @@ namespace Astraia.Net
 {
     internal class LoginTable
     {
-        [Key] [Column] public string userName { get; set; }
+        [Key] [Column] public string deviceData { get; set; }
 
-        [Column] public int userId { get; set; }
+        [Column] public long userName { get; set; }
 
-        [Column] public int userData { get; set; }
+        [Column] public long userData { get; set; }
 
-        [Column] public DateTime loginTime { get; set; }
+        [Column] public DateTime recordTime { get; set; }
 
         [Column] public DateTime updateTime { get; set; }
 

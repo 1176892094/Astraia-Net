@@ -10,34 +10,43 @@
 // *********************************************************************************
 
 using System;
-using System.Collections.Generic;
 
 namespace Astraia.Net
 {
     [Serializable]
-    public struct SqlSettingManager
+    internal struct LoginRequest
     {
-        public string deviceId; // 设备标识
-        public int archive; // 选择存档
-        public int process; // 后处理
-        public int quality; // 画质
-        public int joystick; // 摇杆设置
-        public int screenRate; // 分辨率
-        public string version; // 当前版本
-        public List<int> handbook; // 图鉴物品
-        public List<string> addresses; // 存储地址
-        public int modifyData; // 修改数据
-        public int coinCache; // 金币广告
-        public int dustCache; // 粉尘广告
-        public int userData; // 用户数据
-        public string userId; // 用户Id
-        public string createTime; // 创建时间
-        public string loginTime; // 最新的登陆时间
-        public string targetTime; // 登陆时间下一天
+        public string username;
+        public string password;
+        public SettingManager settingManager;
+        public PlayerData playerData1;
+        public PlayerData playerData2;
+        public PlayerData playerData3;
+        public PlayerData playerData4;
     }
 
     [Serializable]
-    public struct SqlPlayerData
+    internal struct LoginResponse
+    {
+        public long userName;
+        public long userData;
+        public long codeData;
+    }
+
+    [Serializable]
+    internal struct SettingManager
+    {
+        public string deviceData;
+        public string version;
+        public long userData;
+        public long userName;
+        public long recordTime;
+        public long createTime;
+        public long targetTime;
+    }
+
+    [Serializable]
+    internal struct PlayerData
     {
         public string deviceData;
         public string playerName;
@@ -48,22 +57,5 @@ namespace Astraia.Net
         public int coinCount;
         public int woodCache;
         public int woodCount;
-        public int bossCount;
-        public int enemyCount;
-        public int chestCount;
-        public int deathCount;
-        public int towerCount;
-        public List<SqlItem> bagItems;
-        public List<SqlItem> equipItems;
-        public List<SqlItem> storeItems;
-        public List<SqlItem> skillItems;
-    }
-    
-    [Serializable]
-    public struct SqlItem
-    {
-        public long a;
-        public long b;
-        public long c;
     }
 }

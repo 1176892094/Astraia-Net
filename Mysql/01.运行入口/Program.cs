@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json;
 
@@ -100,16 +101,15 @@ namespace Astraia.Net
             {
                 return JsonConvert.SerializeObject(response);
             }
-
             try
             {
                 var connection = new Command(database);
-                if (!string.IsNullOrEmpty(request.settingManager.deviceId))
+                if (!string.IsNullOrEmpty(request.settingManager.deviceData))
                 {
                     response = UpdateLoginTime(connection, request, response);
                 }
 
-                if (response.errorCode == 0)
+                if (response.codeData == 0)
                 {
                     if (response.userData < 0)
                     {
@@ -120,14 +120,14 @@ namespace Astraia.Net
                         response.userData = request.settingManager.userData;
                     }
 
-                    var userId = UpdateOrInsert(connection, request, response.userData);
-                    if (!string.IsNullOrEmpty(userId))
+                    var userName = UpdateOrInsert(connection, request, response.userData);
+                    if (userName != 0)
                     {
-                        response.userId = userId;
+                        response.userName = userName;
                     }
 
                     watch.Stop();
-                    Logs.Info($"用户 {response.userId} 数据更新成功。耗时 {(float)watch.ElapsedMilliseconds / 1000} 秒");
+                    Logs.Info("用户 {0} 数据更新成功。耗时 {1} 秒".Format(response.userName, watch.ElapsedMilliseconds / 1000F));
                 }
 
                 return JsonConvert.SerializeObject(response);
@@ -135,27 +135,24 @@ namespace Astraia.Net
             catch (Exception e)
             {
                 Logs.Error(e.Message);
-                response.errorCode = 2;
+                response.codeData = 2;
                 return JsonConvert.SerializeObject(response);
             }
         }
 
         private static LoginResponse UpdateLoginTime(Command connection, LoginRequest request, LoginResponse response)
         {
-            var parameter = new Dictionary<string, object>
-            {
-                { "@userName", request.settingManager.deviceId }
-            };
-            var dataTables = Process.Select<LoginTable>(connection, "userName = @userName", parameter);
+            var parameter = new Dictionary<string, object> { { "@deviceData", request.settingManager.deviceData } };
+            var dataTables = Process.Select<LoginTable>(connection, "deviceData = @deviceData", parameter);
             foreach (var dataTable in dataTables)
             {
-                if (dataTable.loginTime > DateTime.Parse(request.settingManager.loginTime))
+                if (dataTable.recordTime.Ticks > request.settingManager.recordTime)
                 {
-                    Logs.Error($"用户 {dataTable.userId} 数据更新失败！");
-                    response.errorCode = 1;
+                    Logs.Error("用户 {0} 数据更新失败！".Format(dataTable.userName));
+                    response.codeData = 1;
                 }
 
-                response.userId = dataTable.userId.ToString();
+                response.userName = dataTable.userName;
                 response.userData = dataTable.userData;
                 break;
             }
@@ -164,40 +161,29 @@ namespace Astraia.Net
             return response;
         }
 
-        private static string UpdateOrInsert(Command connection, LoginRequest request, int userData)
+        private static long UpdateOrInsert(Command connection, LoginRequest request, long userData)
         {
-            var parameters = new Dictionary<string, object>
-            {
-                { "@userName", request.settingManager.deviceId }
-            };
-            var dataTables = Process.Select<LoginTable>(connection, "userName = @userName", parameters);
+            var parameters = new Dictionary<string, object> { { "@deviceData", request.settingManager.deviceData } };
+            var dataTables = Process.Select<LoginTable>(connection, "deviceData = @deviceData", parameters);
             if (dataTables.Count == 0)
             {
-                parameters = new Dictionary<string, object>
+                Logs.Warn(request.settingManager.deviceData);
+                Process.Insert<LoginTable>(connection, new Dictionary<string, object>
                 {
-                    { "userName", request.settingManager.deviceId },
+                    { "deviceData", request.settingManager.deviceData },
                     { "userData", userData },
                     { "settingManager", JsonConvert.SerializeObject(request.settingManager) },
                     { "playerData1", JsonConvert.SerializeObject(request.playerData1) },
                     { "playerData2", JsonConvert.SerializeObject(request.playerData2) },
                     { "playerData3", JsonConvert.SerializeObject(request.playerData3) },
                     { "playerData4", JsonConvert.SerializeObject(request.playerData4) },
-                };
-                Process.Insert<LoginTable>(connection, parameters);
-                parameters = new Dictionary<string, object>
-                {
-                    { "@userName", request.settingManager.deviceId }
-                };
-                dataTables = Process.Select<LoginTable>(connection, "userName = @userName", parameters);
-                foreach (var dataTable in dataTables)
-                {
-                    return dataTable.userId.ToString();
-                }
-
-                return string.Empty;
+                });
+                dataTables = Process.Select<LoginTable>(connection, "deviceData = @deviceData", parameters);
+                return dataTables.Select(dataTable => dataTable.userName).FirstOrDefault();
             }
 
-            parameters = new Dictionary<string, object>
+            var parameter = new KeyValuePair<string, object>("deviceData", request.settingManager.deviceData);
+            Process.Update<LoginTable>(connection, parameter, new Dictionary<string, object>
             {
                 { "userData", userData },
                 { "settingManager", JsonConvert.SerializeObject(request.settingManager) },
@@ -206,11 +192,8 @@ namespace Astraia.Net
                 { "playerData3", JsonConvert.SerializeObject(request.playerData3) },
                 { "playerData4", JsonConvert.SerializeObject(request.playerData4) },
                 { "updateTime", DateTime.Now },
-            };
-
-            var parameter = new KeyValuePair<string, object>("userName", request.settingManager.deviceId);
-            Process.Update<LoginTable>(connection, parameter, parameters);
-            return string.Empty;
+            });
+            return 0;
         }
     }
 }

@@ -58,8 +58,8 @@ namespace Astraia.Net
             {
                 return null;
             }
-
-            return $"Server={Address};Database={Database};User ID={username};Password={password};";
+        
+            return "Server={0};Database={1};User ID={2};Password={3};".Format(Address, Database, username, password);
         }
     }
 }
