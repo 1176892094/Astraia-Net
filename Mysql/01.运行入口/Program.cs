@@ -14,7 +14,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
+using System.Timers;
 using Newtonsoft.Json;
 
 namespace Astraia.Net
@@ -22,13 +26,15 @@ namespace Astraia.Net
     internal class Program
     {
         private static Setting Setting;
+        private static Timer cleanupTimer;
 
-        private static void Main(string[] args)
+        private static async Task Main(string[] args)
         {
-            new Program().StartServer();
+            var program = new Program();
+            await program.StartServer();
         }
 
-        private void StartServer()
+        private async Task StartServer()
         {
             Logs.Info = Info;
             Logs.Warn = Warn;
@@ -52,16 +58,17 @@ namespace Astraia.Net
                 Assembly.LoadFile(Path.GetFullPath("Astraia.Kcp.dll"));
 
                 Logs.Info("开始进行传输...");
-                if (Setting.UseEndPoint)
-                {
-                    Logs.Info("开启REST服务...");
-                    if (!RestUtility.StartServer(Setting.RestPort))
-                    {
-                        Logs.Error("请以管理员身份运行或检查端口是否被占用。");
-                    }
-                }
+                SetupDailyCleanup();
+                CleanupInactivePlayers();
+                var service = new HttpListener();
+                service.Prefixes.Add("http://*:{0}/".Format(Setting.RestPort));
+                service.Start();
 
-                Console.ReadKey();
+                while (true)
+                {
+                    var context = await service.GetContextAsync(); // 异步等待请求
+                    _ = Task.Run(() => HandleRequest(context)); // 每个请求单独处理
+                }
             }
             catch (Exception e)
             {
@@ -91,7 +98,35 @@ namespace Astraia.Net
             }
         }
 
-        internal static string Login(LoginRequest request)
+        private static async void HandleRequest(HttpListenerContext context)
+        {
+            var request = context.Request;
+            var response = context.Response;
+            if (request.HttpMethod == "POST" && request.Url.AbsolutePath == "/api/server/login")
+            {
+                byte[] readBytes;
+                using (var memoryStream = new MemoryStream())
+                {
+                    await context.Request.InputStream.CopyToAsync(memoryStream);
+                    readBytes = memoryStream.ToArray();
+                }
+
+                readBytes = Service.Xor.Decrypt(readBytes);
+                var readJson = Encoding.UTF8.GetString(readBytes);
+                readJson = Service.Zip.Decompress(readJson);
+                var result = JsonConvert.DeserializeObject<LoginRequest>(readJson);
+                readJson = Service.Zip.Compress(Login(result));
+                readBytes = Encoding.UTF8.GetBytes(readJson);
+                readBytes = Service.Xor.Encrypt(readBytes);
+                response.ContentType = "application/octet-stream";
+                response.ContentLength64 = readBytes.Length;
+                await response.OutputStream.WriteAsync(readBytes, 0, readBytes.Length);
+            }
+
+            response.OutputStream.Close();
+        }
+
+        private static string Login(LoginRequest request)
         {
             var watch = new Stopwatch();
             watch.Start();
@@ -101,6 +136,7 @@ namespace Astraia.Net
             {
                 return JsonConvert.SerializeObject(response);
             }
+
             try
             {
                 var connection = new Command(database);
@@ -146,7 +182,7 @@ namespace Astraia.Net
             var dataTables = Process.Select<LoginTable>(connection, "deviceData = @deviceData", parameter);
             foreach (var dataTable in dataTables)
             {
-                if (dataTable.recordTime.Ticks > request.settingManager.recordTime)
+                if (dataTable.recordTime > DateTime.Parse(request.settingManager.recordTime))
                 {
                     Logs.Error("用户 {0} 数据更新失败！".Format(dataTable.userName));
                     response.codeData = 1;
@@ -194,6 +230,50 @@ namespace Astraia.Net
                 { "updateTime", DateTime.Now },
             });
             return 0;
+        }
+
+
+        private void SetupDailyCleanup()
+        {
+            cleanupTimer = new Timer();
+            cleanupTimer.AutoReset = true;
+
+            var now = DateTime.Now;
+            var nextMidnight = now.Date.AddDays(1);
+            var initialInterval = (nextMidnight - now).TotalMilliseconds;
+
+            cleanupTimer.Interval = initialInterval;
+            cleanupTimer.Elapsed += (sender, e) =>
+            {
+                CleanupInactivePlayers();
+                cleanupTimer.Interval = 24 * 60 * 60 * 1000;
+            };
+            cleanupTimer.Start();
+        }
+
+        private static void CleanupInactivePlayers()
+        {
+            try
+            {
+                var database = Setting.GetConnection(Setting.Username, Setting.Password);
+                var connection = new Command(database);
+
+                var parameters = new Dictionary<string, object> { { "@threshold", DateTime.Now.AddDays(-7) } };
+                var inactivePlayers = Process.Select<LoginTable>(connection, "recordTime < @threshold", parameters);
+
+                var deletedCount = 0;
+                foreach (var player in inactivePlayers)
+                {
+                    Process.Delete<LoginTable>(connection, player.deviceData);
+                    deletedCount++;
+                }
+
+                Logs.Info("清理 {0} 名 7 天未登录玩家。".Format(deletedCount));
+            }
+            catch (Exception e)
+            {
+                Logs.Error("清理未登录玩家失败：{0}".Format(e));
+            }
         }
     }
 }

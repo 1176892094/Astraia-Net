@@ -42,11 +42,6 @@ namespace Astraia.Net
         public ushort RestPort = 20974;
         
         /// <summary>
-        /// 是否启用Rest服务
-        /// </summary>
-        public bool UseEndPoint = true;
-        
-        /// <summary>
         /// 获取数据库连接
         /// </summary>
         /// <param name="username">验证用户名</param>

@@ -40,9 +40,9 @@ namespace Astraia.Net
         public string version;
         public long userData;
         public long userName;
-        public long recordTime;
-        public long createTime;
-        public long targetTime;
+        public string recordTime;
+        public string createTime;
+        public string targetTime;
     }
 
     [Serializable]
