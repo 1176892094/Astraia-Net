@@ -58,7 +58,7 @@ namespace Astraia.Net
                 Logs.Info("开始进行传输...");
                 SetupDailyCleanup();
                 CleanupInactivePlayers();
-                HttpServer.StartServer(Setting.RestPort, HttpThread);
+                HttpServer.StartServer(Setting.HttpPort, HttpThread);
                 Console.ReadKey();
             }
             catch (Exception e)

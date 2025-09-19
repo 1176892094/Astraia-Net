@@ -39,7 +39,7 @@ namespace Astraia.Net
         /// <summary>
         /// Rest服务器端口
         /// </summary>
-        public ushort RestPort = 20974;
+        public ushort HttpPort = 20974;
         
         /// <summary>
         /// 获取数据库连接

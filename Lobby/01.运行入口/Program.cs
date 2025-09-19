@@ -58,14 +58,14 @@ namespace Astraia.Net
                 Logs.Info("初始化传输类...");
                 Process = new Process(transport);
 
-                transport.port = Setting.RestPort;
+                transport.port = Setting.HttpPort;
                 transport.OnServerConnect = Process.ServerConnect;
                 transport.OnServerReceive = Process.ServerReceive;
                 transport.OnServerDisconnect = Process.ServerDisconnect;
                 transport.StartServer();
 
                 Logs.Info("开始进行传输...");
-                HttpServer.StartServer(Setting.RestPort, HttpThread);
+                HttpServer.StartServer(Setting.HttpPort, HttpThread);
             }
             catch (Exception e)
             {

@@ -24,7 +24,7 @@ namespace Astraia.Net
         /// <summary>
         /// Rest服务器端口
         /// </summary>
-        public ushort RestPort = 8080;
+        public ushort HttpPort = 8080;
 
         /// <summary>
         /// 主线程循环时间
