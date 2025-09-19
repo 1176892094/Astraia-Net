@@ -16,7 +16,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 using Newtonsoft.Json;
@@ -28,13 +27,12 @@ namespace Astraia.Net
         private static Setting Setting;
         private static Timer cleanupTimer;
 
-        private static async Task Main(string[] args)
+        private static void Main(string[] args)
         {
-            var program = new Program();
-            await program.StartServer();
+            new Program().StartServer();
         }
 
-        private async Task StartServer()
+        private void StartServer()
         {
             Logs.Info = Info;
             Logs.Warn = Warn;
@@ -60,15 +58,8 @@ namespace Astraia.Net
                 Logs.Info("开始进行传输...");
                 SetupDailyCleanup();
                 CleanupInactivePlayers();
-                var service = new HttpListener();
-                service.Prefixes.Add("http://*:{0}/".Format(Setting.RestPort));
-                service.Start();
-
-                while (true)
-                {
-                    var context = await service.GetContextAsync(); // 异步等待请求
-                    _ = Task.Run(() => HandleRequest(context)); // 每个请求单独处理
-                }
+                HttpServer.StartServer(Setting.RestPort, HttpThread);
+                Console.ReadKey();
             }
             catch (Exception e)
             {
@@ -98,25 +89,23 @@ namespace Astraia.Net
             }
         }
 
-        private static async void HandleRequest(HttpListenerContext context)
+        private static async Task HttpThread(HttpListenerRequest request, HttpListenerResponse response)
         {
-            var request = context.Request;
-            var response = context.Response;
             if (request.HttpMethod == "POST" && request.Url.AbsolutePath == "/api/server/login")
             {
                 byte[] readBytes;
                 using (var memoryStream = new MemoryStream())
                 {
-                    await context.Request.InputStream.CopyToAsync(memoryStream);
+                    await request.InputStream.CopyToAsync(memoryStream);
                     readBytes = memoryStream.ToArray();
                 }
 
                 readBytes = Service.Xor.Decrypt(readBytes);
-                var readJson = Encoding.UTF8.GetString(readBytes);
+                var readJson = Service.Text.GetString(readBytes);
                 readJson = Service.Zip.Decompress(readJson);
                 var result = JsonConvert.DeserializeObject<LoginRequest>(readJson);
                 readJson = Service.Zip.Compress(Login(result));
-                readBytes = Encoding.UTF8.GetBytes(readJson);
+                readBytes = Service.Text.GetBytes(readJson);
                 readBytes = Service.Xor.Encrypt(readBytes);
                 response.ContentType = "application/octet-stream";
                 response.ContentLength64 = readBytes.Length;

@@ -65,7 +65,7 @@ namespace Astraia.Net
                 transport.StartServer();
 
                 Logs.Info("开始进行传输...");
-                RoomRequest();
+                HttpServer.StartServer(Setting.RestPort, HttpThread);
             }
             catch (Exception e)
             {
@@ -73,8 +73,7 @@ namespace Astraia.Net
                 Console.ReadKey();
                 Environment.Exit(0);
             }
-
-
+            
             while (true)
             {
                 transport.Update();
@@ -100,47 +99,27 @@ namespace Astraia.Net
             }
         }
 
-        private void RoomRequest()
+        private static async Task HttpThread(HttpListenerRequest request, HttpListenerResponse response)
         {
-            Task.Run(async () =>
+            if (request.HttpMethod == "GET" && request.Url.AbsolutePath == "/api/compressed/servers")
             {
-                var service = new HttpListener();
-                service.Prefixes.Add("http://*:{0}/".Format(Setting.RestPort));
-                service.Start();
-                while (true)
+                if (Setting.RequestRoom)
                 {
-                    var context = await service.GetContextAsync(); // 异步等待请求
-                    HandleRequest(context);
+                    var readJson = JsonConvert.SerializeObject(Process.roomData);
+                    readJson = Service.Zip.Compress(readJson);
+                    var readBytes = Service.Text.GetBytes(readJson);
+                    response.StatusCode = (int)HttpStatusCode.OK;
+                    response.ContentType = "text/plain; charset=utf-8";
+                    response.ContentLength64 = readBytes.Length;
+                    await response.OutputStream.WriteAsync(readBytes, 0, readBytes.Length);
                 }
-            });
-        }
-
-        private static void HandleRequest(HttpListenerContext context)
-        {
-            Task.Run(async () => // 每个请求单独处理
-            {
-                var request = context.Request;
-                var response = context.Response;
-                if (request.HttpMethod == "Get" && request.Url.AbsolutePath == "/api/compressed/servers")
+                else
                 {
-                    if (Setting.RequestRoom)
-                    {
-                        var json = JsonConvert.SerializeObject(Process.roomData);
-                        json = Service.Zip.Compress(json);
-                        var buffer = Service.Text.GetBytes(json);
-                        response.StatusCode = (int)HttpStatusCode.OK;
-                        response.ContentType = "text/plain; charset=utf-8";
-                        response.ContentLength64 = buffer.Length;
-                        await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-                    }
-                    else
-                    {
-                        response.StatusCode = (int)HttpStatusCode.Forbidden;
-                    }
+                    response.StatusCode = (int)HttpStatusCode.Forbidden;
                 }
+            }
 
-                response.OutputStream.Close();
-            });
+            response.OutputStream.Close();
         }
     }
 }
