@@ -111,8 +111,6 @@ namespace Astraia.Net
                 response.ContentLength64 = readBytes.Length;
                 await response.OutputStream.WriteAsync(readBytes, 0, readBytes.Length);
             }
-
-            response.OutputStream.Close();
         }
 
         private static string Login(LoginRequest request)

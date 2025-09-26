@@ -73,7 +73,7 @@ namespace Astraia.Net
                 Console.ReadKey();
                 Environment.Exit(0);
             }
-            
+
             while (true)
             {
                 transport.Update();
@@ -118,8 +118,6 @@ namespace Astraia.Net
                     response.StatusCode = (int)HttpStatusCode.Forbidden;
                 }
             }
-
-            response.OutputStream.Close();
         }
     }
 }
