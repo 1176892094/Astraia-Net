@@ -30,20 +30,20 @@ namespace Astraia.Net
 
         private async Task MainAsync()
         {
-            Logs.Info = Info;
-            Logs.Warn = Warn;
-            Logs.Error = Error;
+            Log.onInfo = Info;
+            Log.onWarn = Warn;
+            Log.onError = Error;
             var transport = new Transport();
             transport.Awake();
             try
             {
-                Logs.Info("运行服务器...");
+                Log.Info("运行服务器...");
                 if (!File.Exists("setting.json"))
                 {
                     var contents = JsonConvert.SerializeObject(new Setting(), Formatting.Indented);
                     File.WriteAllText("setting.json", contents);
 
-                    Logs.Warn("请将 setting.json 文件配置正确并重新运行。");
+                    Log.Warn("请将 setting.json 文件配置正确并重新运行。");
                     Console.ReadKey();
                     Environment.Exit(0);
                     return;
@@ -51,11 +51,11 @@ namespace Astraia.Net
 
                 Setting = JsonConvert.DeserializeObject<Setting>(File.ReadAllText("setting.json"));
 
-                Logs.Info("加载程序集...");
+                Log.Info("加载程序集...");
                 Assembly.LoadFile(Path.GetFullPath("Astraia.dll"));
                 Assembly.LoadFile(Path.GetFullPath("Astraia.Kcp.dll"));
 
-                Logs.Info("初始化传输类...");
+                Log.Info("初始化传输类...");
                 Process = new Process(transport);
 
                 transport.port = Setting.HttpPort;
@@ -64,12 +64,12 @@ namespace Astraia.Net
                 transport.OnServerDisconnect = Process.ServerDisconnect;
                 transport.StartServer();
 
-                Logs.Info("开始进行传输...");
+                Log.Info("开始进行传输...");
                 HttpServer.StartServer(Setting.HttpPort, HttpThread);
             }
             catch (Exception e)
             {
-                Logs.Error(e.ToString());
+                Log.Error(e.ToString());
                 Console.ReadKey();
                 Environment.Exit(0);
             }

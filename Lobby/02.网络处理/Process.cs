@@ -33,7 +33,7 @@ namespace Astraia.Net
         {
             connections.Add(clientId);
             using var writer = MemoryWriter.Pop();
-            writer.WriteByte((byte)OpCodes.Connect);
+            writer.WriteByte((byte)Lobby.身份验证成功);
             transport.SendToClient(clientId, writer);
         }
 
@@ -45,7 +45,7 @@ namespace Astraia.Net
                 if (room.clientId == clientId) // 主机断开
                 {
                     using var writer = MemoryWriter.Pop();
-                    writer.WriteByte((byte)OpCodes.LeaveRoom);
+                    writer.WriteByte((byte)Lobby.离开房间成功);
                     foreach (var client in room.clients)
                     {
                         transport.SendToClient(client, writer);
@@ -61,7 +61,7 @@ namespace Astraia.Net
                 if (room.clients.Remove(clientId)) // 客户端断开
                 {
                     using var writer = MemoryWriter.Pop();
-                    writer.WriteByte((byte)OpCodes.KickRoom);
+                    writer.WriteByte((byte)Lobby.移除玩家成功);
                     writer.WriteInt(clientId);
                     transport.SendToClient(room.clientId, writer);
                     clients.Remove(clientId);
@@ -75,8 +75,8 @@ namespace Astraia.Net
             try
             {
                 using var reader = MemoryReader.Pop(segment);
-                var opcode = (OpCodes)reader.ReadByte();
-                if (opcode == OpCodes.Connected)
+                var opcode = (Lobby)reader.ReadByte();
+                if (opcode == Lobby.请求进入大厅)
                 {
                     if (connections.Contains(clientId))
                     {
@@ -84,20 +84,25 @@ namespace Astraia.Net
                         if (serverKey == Program.Setting.ServerKey)
                         {
                             using var writer = MemoryWriter.Pop();
-                            writer.WriteByte((byte)OpCodes.Connected);
+                            writer.WriteByte((byte)Lobby.进入大厅成功);
                             transport.SendToClient(clientId, writer);
                         }
 
                         connections.Remove(clientId);
                     }
                 }
-                else if (opcode == OpCodes.CreateRoom)
+                else if (opcode == Lobby.请求创建房间)
                 {
                     ServerDisconnect(clientId);
                     string id;
                     do
                     {
-                        id = new string(Enumerable.Repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 5).Select(s => s[Service.Random.Next(s.Length)]).ToArray());
+                        var buffer = new char[6];
+                        for (int i = 0; i < 6; i++)
+                        {
+                            buffer[i] = (char)('A' + Service.Random.Next(26));
+                        }
+                        id = new string(buffer);
                     } while (rooms.ContainsKey(id));
 
                     var room = new Room
@@ -113,14 +118,14 @@ namespace Astraia.Net
 
                     rooms.Add(id, room);
                     clients.Add(clientId, room);
-                    Logs.Info("客户端 {0} 创建房间。 房间名称: {1} 房间数: {2} 连接数: {3}".Format( clientId, room.roomName, rooms.Count, clients.Count));
+                    Log.Info("客户端 {0} 创建房间。 房间名称: {1} 房间数: {2} 连接数: {3}".Format(clientId, room.roomName, rooms.Count, clients.Count));
 
                     using var writer = MemoryWriter.Pop();
-                    writer.WriteByte((byte)OpCodes.CreateRoom);
+                    writer.WriteByte((byte)Lobby.创建房间成功);
                     writer.WriteString(room.roomId);
                     transport.SendToClient(clientId, writer);
                 }
-                else if (opcode == OpCodes.JoinRoom)
+                else if (opcode == Lobby.请求加入房间)
                 {
                     ServerDisconnect(clientId);
                     var roomId = reader.ReadString();
@@ -128,10 +133,10 @@ namespace Astraia.Net
                     {
                         room.clients.Add(clientId);
                         clients.Add(clientId, room);
-                        Logs.Info(("客户端 {0} 加入房间。 房间名称: {1} 房间数: {2} 连接数: {3}".Format(clientId, room.roomName, rooms.Count, clients.Count)));
+                        Log.Info(("客户端 {0} 加入房间。 房间名称: {1} 房间数: {2} 连接数: {3}".Format(clientId, room.roomName, rooms.Count, clients.Count)));
 
                         using var writer = MemoryWriter.Pop();
-                        writer.WriteByte((byte)OpCodes.JoinRoom);
+                        writer.WriteByte((byte)Lobby.加入房间成功);
                         writer.WriteInt(clientId);
                         transport.SendToClient(clientId, writer);
                         transport.SendToClient(room.clientId, writer);
@@ -139,11 +144,11 @@ namespace Astraia.Net
                     else
                     {
                         using var writer = MemoryWriter.Pop();
-                        writer.WriteByte((byte)OpCodes.LeaveRoom);
+                        writer.WriteByte((byte)Lobby.离开房间成功);
                         transport.SendToClient(clientId, writer);
                     }
                 }
-                else if (opcode == OpCodes.UpdateRoom)
+                else if (opcode == Lobby.更新房间数据)
                 {
                     if (clients.TryGetValue(clientId, out var room))
                     {
@@ -153,19 +158,19 @@ namespace Astraia.Net
                         room.maxCount = reader.ReadInt();
                     }
                 }
-                else if (opcode == OpCodes.LeaveRoom)
+                else if (opcode == Lobby.请求离开房间)
                 {
                     ServerDisconnect(clientId);
                 }
-                else if (opcode == OpCodes.UpdateData)
+                else if (opcode == Lobby.同步网络数据)
                 {
                     var message = reader.ReadArraySegment();
                     var targetId = reader.ReadInt();
                     if (clients.TryGetValue(clientId, out var room) && room != null)
                     {
-                        if (message.Count > transport.SendLength(channel))
+                        if (message.Count > transport.GetLength(channel))
                         {
-                            Logs.Warn("接收消息大小过大！消息大小: {0}".Format(message.Count));
+                            Log.Warn("接收消息大小过大！消息大小: {0}".Format(message.Count));
                             ServerDisconnect(clientId);
                             return;
                         }
@@ -175,7 +180,7 @@ namespace Astraia.Net
                             if (room.clients.Contains(targetId))
                             {
                                 using var writer = MemoryWriter.Pop();
-                                writer.WriteByte((byte)OpCodes.UpdateData);
+                                writer.WriteByte((byte)Lobby.同步网络数据);
                                 writer.WriteArraySegment(message);
                                 transport.SendToClient(targetId, writer, channel);
                             }
@@ -183,14 +188,14 @@ namespace Astraia.Net
                         else
                         {
                             using var writer = MemoryWriter.Pop();
-                            writer.WriteByte((byte)OpCodes.UpdateData);
+                            writer.WriteByte((byte)Lobby.同步网络数据);
                             writer.WriteArraySegment(message);
                             writer.WriteInt(clientId);
                             transport.SendToClient(room.clientId, writer, channel);
                         }
                     }
                 }
-                else if (opcode == OpCodes.KickRoom)
+                else if (opcode == Lobby.请求移除玩家)
                 {
                     var targetId = reader.ReadInt();
                     var copies = rooms.Values.ToList();
@@ -199,7 +204,7 @@ namespace Astraia.Net
                         if (room.clientId == targetId) // 踢掉的是主机
                         {
                             using var writer = MemoryWriter.Pop();
-                            writer.WriteByte((byte)OpCodes.LeaveRoom);
+                            writer.WriteByte((byte)Lobby.离开房间成功);
                             foreach (var client in room.clients)
                             {
                                 transport.SendToClient(client, writer);
@@ -217,7 +222,7 @@ namespace Astraia.Net
                             if (room.clients.Remove(targetId))
                             {
                                 using var writer = MemoryWriter.Pop();
-                                writer.WriteByte((byte)OpCodes.KickRoom);
+                                writer.WriteByte((byte)Lobby.移除玩家成功);
                                 writer.WriteInt(targetId);
                                 transport.SendToClient(room.clientId, writer);
                                 clients.Remove(targetId);
@@ -229,8 +234,8 @@ namespace Astraia.Net
             }
             catch (Exception e)
             {
-                Logs.Error(e.ToString());
-                transport.StopClient(clientId);
+                Log.Error(e.ToString());
+                transport.Disconnect(clientId);
             }
         }
     }

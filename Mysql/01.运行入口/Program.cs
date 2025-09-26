@@ -34,28 +34,28 @@ namespace Astraia.Net
 
         private void StartServer()
         {
-            Logs.Info = Info;
-            Logs.Warn = Warn;
-            Logs.Error = Error;
+            Log.onInfo = Info;
+            Log.onWarn = Warn;
+            Log.onError = Error;
             try
             {
-                Logs.Info("运行服务器...");
+                Log.Info("运行服务器...");
                 if (!File.Exists("service.json"))
                 {
                     var contents = JsonConvert.SerializeObject(new Setting(), Formatting.Indented);
                     File.WriteAllText("service.json", contents);
-                    Logs.Warn("请将 service.json 文件配置正确并重新运行。");
+                    Log.Warn("请将 service.json 文件配置正确并重新运行。");
                     Console.ReadKey();
                     Environment.Exit(0);
                     return;
                 }
 
                 Setting = JsonConvert.DeserializeObject<Setting>(File.ReadAllText("service.json"));
-                Logs.Info("加载程序集...");
+                Log.Info("加载程序集...");
                 Assembly.LoadFile(Path.GetFullPath("Astraia.dll"));
                 Assembly.LoadFile(Path.GetFullPath("Astraia.Kcp.dll"));
 
-                Logs.Info("开始进行传输...");
+                Log.Info("开始进行传输...");
                 SetupDailyCleanup();
                 CleanupInactivePlayers();
                 HttpServer.StartServer(Setting.HttpPort, HttpThread);
@@ -63,7 +63,7 @@ namespace Astraia.Net
             }
             catch (Exception e)
             {
-                Logs.Error(e.ToString());
+                Log.Error(e.ToString());
                 Console.ReadKey();
                 Environment.Exit(0);
             }
@@ -152,14 +152,14 @@ namespace Astraia.Net
                     }
 
                     watch.Stop();
-                    Logs.Info("用户 {0} 数据更新成功。耗时 {1} 秒".Format(response.userName, watch.ElapsedMilliseconds / 1000F));
+                    Log.Info("用户 {0} 数据更新成功。耗时 {1} 秒".Format(response.userName, watch.ElapsedMilliseconds / 1000F));
                 }
 
                 return JsonConvert.SerializeObject(response);
             }
             catch (Exception e)
             {
-                Logs.Error(e.Message);
+                Log.Error(e.Message);
                 response.codeData = 2;
                 return JsonConvert.SerializeObject(response);
             }
@@ -173,7 +173,7 @@ namespace Astraia.Net
             {
                 if (dataTable.recordTime > DateTime.Parse(request.settingManager.recordTime))
                 {
-                    Logs.Error("用户 {0} 数据更新失败！".Format(dataTable.userName));
+                    Log.Error("用户 {0} 数据更新失败！".Format(dataTable.userName));
                     response.codeData = 1;
                 }
 
@@ -192,7 +192,7 @@ namespace Astraia.Net
             var dataTables = Process.Select<LoginTable>(connection, "deviceData = @deviceData", parameters);
             if (dataTables.Count == 0)
             {
-                Logs.Warn(request.settingManager.deviceData);
+                Log.Warn(request.settingManager.deviceData);
                 Process.Insert<LoginTable>(connection, new Dictionary<string, object>
                 {
                     { "deviceData", request.settingManager.deviceData },
@@ -257,11 +257,11 @@ namespace Astraia.Net
                     deletedCount++;
                 }
 
-                Logs.Info("清理 {0} 名 7 天未登录玩家。".Format(deletedCount));
+                Log.Info("清理 {0} 名 7 天未登录玩家。".Format(deletedCount));
             }
             catch (Exception e)
             {
-                Logs.Error("清理未登录玩家失败：{0}".Format(e));
+                Log.Error("清理未登录玩家失败：{0}".Format(e));
             }
         }
     }

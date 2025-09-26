@@ -18,8 +18,8 @@ namespace Astraia
     {
         public string address = "localhost";
         public ushort port = 20974;
-        public uint maxUnit = 1200;
-        public uint timeout = 10000;
+        public uint unitData = 1200;
+        public uint overTime = 10000;
         public uint interval = 10;
         public uint deadLink = 40;
         public uint fastResend = 2;
@@ -38,7 +38,7 @@ namespace Astraia
 
         public void Awake()
         {
-            var setting = new Setting(maxUnit, timeout, interval, deadLink, fastResend, sendWindow, receiveWindow);
+            var setting = new Setting(unitData, overTime, interval, deadLink, fastResend, sendWindow, receiveWindow);
             client = new Client(setting, ClientConnect, ClientDisconnect, ClientError, ClientReceive);
             server = new Server(setting, ServerConnect, ServerDisconnect, ServerError, ServerReceive);
             return;
@@ -74,9 +74,9 @@ namespace Astraia
 
             void ServerError(int clientId, Error error, string message)
             {
-                if (error != Error.DnsResolve && error != Error.Timeout)
+                if (error != Error.解析失败 && error != Error.连接超时)
                 {
-                    Logs.Warn("客户端: {0}  错误代码: {1}\n{2}".Format(clientId, error, message));
+                    Log.Warn("客户端: {0}  错误代码: {1}\n{2}".Format(clientId, error, message));
                 }
             }
 
@@ -92,9 +92,9 @@ namespace Astraia
             server.AfterUpdate();
         }
 
-        public int SendLength(int channel)
+        public int GetLength(int channel)
         {
-            return channel == Channel.Reliable ? Agent.ReliableSize(maxUnit, receiveWindow) : Agent.UnreliableSize(maxUnit);
+            return channel == Channel.Reliable ? Module.KcpLength(unitData, receiveWindow) : Module.UdpLength(unitData);
         }
 
         public void StartServer()
@@ -107,7 +107,7 @@ namespace Astraia
             server.StopServer();
         }
 
-        public void StopClient(int clientId)
+        public void Disconnect(int clientId)
         {
             server.Disconnect(clientId);
         }
@@ -127,7 +127,7 @@ namespace Astraia
             client.Connect(uri.Host, (ushort)(uri.IsDefaultPort ? port : uri.Port));
         }
 
-        public void StopClient()
+        public void Disconnect()
         {
             client.Disconnect();
         }
