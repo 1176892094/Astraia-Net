@@ -92,7 +92,7 @@ namespace Astraia
             server.AfterUpdate();
         }
 
-        public int GetLength(int channel)
+        public uint GetLength(int channel)
         {
             return channel == Channel.Reliable ? Module.KcpLength(unitData, receiveWindow) : Module.UdpLength(unitData);
         }

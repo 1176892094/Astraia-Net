@@ -30,9 +30,7 @@ namespace Astraia.Net
 
         private async Task MainAsync()
         {
-            Log.onInfo = Info;
-            Log.onWarn = Warn;
-            Log.onError = Error;
+            Log.Setup(Info, Warn, Error);
             var transport = new Transport();
             transport.Awake();
             try

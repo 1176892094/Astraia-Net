@@ -34,9 +34,7 @@ namespace Astraia.Net
 
         private void StartServer()
         {
-            Log.onInfo = Info;
-            Log.onWarn = Warn;
-            Log.onError = Error;
+            Log.Setup(Info, Warn, Error);
             try
             {
                 Log.Info("运行服务器...");

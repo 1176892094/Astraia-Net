@@ -61,7 +61,7 @@ namespace Astraia.Net
                 if (room.clients.Remove(clientId)) // 客户端断开
                 {
                     using var writer = MemoryWriter.Pop();
-                    writer.WriteByte((byte)Lobby.移除玩家成功);
+                    writer.WriteByte((byte)Lobby.断开玩家连接);
                     writer.WriteInt(clientId);
                     transport.SendToClient(room.clientId, writer);
                     clients.Remove(clientId);
@@ -100,7 +100,7 @@ namespace Astraia.Net
                         var buffer = new char[6];
                         for (int i = 0; i < 6; i++)
                         {
-                            buffer[i] = (char)('A' + Service.Random.Next(26));
+                            buffer[i] = (char)('A' + Service.Rng.Next(26));
                         }
                         id = new string(buffer);
                     } while (rooms.ContainsKey(id));
@@ -222,7 +222,7 @@ namespace Astraia.Net
                             if (room.clients.Remove(targetId))
                             {
                                 using var writer = MemoryWriter.Pop();
-                                writer.WriteByte((byte)Lobby.移除玩家成功);
+                                writer.WriteByte((byte)Lobby.断开玩家连接);
                                 writer.WriteInt(targetId);
                                 transport.SendToClient(room.clientId, writer);
                                 clients.Remove(targetId);
