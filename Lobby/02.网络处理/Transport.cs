@@ -76,7 +76,7 @@ namespace Astraia
             {
                 if (error != Error.解析失败 && error != Error.连接超时)
                 {
-                    Log.Warn("客户端: {0}  错误代码: {1}\n{2}".Format(clientId, error, message));
+                    Service.Log.Warn("客户端: {0}  错误代码: {1}\n{2}".Format(clientId, error, message));
                 }
             }
 
@@ -94,7 +94,7 @@ namespace Astraia
 
         public uint GetLength(int channel)
         {
-            return channel == Channel.Reliable ? Module.KcpLength(unitData, receiveWindow) : Module.UdpLength(unitData);
+            return channel == Channel.Reliable ? Peer.KcpLength(unitData, receiveWindow) : Peer.UdpLength(unitData);
         }
 
         public void StartServer()

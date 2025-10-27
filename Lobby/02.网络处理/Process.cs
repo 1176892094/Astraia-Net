@@ -100,7 +100,7 @@ namespace Astraia.Net
                         var buffer = new char[6];
                         for (int i = 0; i < 6; i++)
                         {
-                            buffer[i] = (char)('A' + Service.Rng.Next(26));
+                            buffer[i] = (char)('A' + Service.Seed.Next(26));
                         }
                         id = new string(buffer);
                     } while (rooms.ContainsKey(id));
@@ -118,7 +118,7 @@ namespace Astraia.Net
 
                     rooms.Add(id, room);
                     clients.Add(clientId, room);
-                    Log.Info("客户端 {0} 创建房间。 房间名称: {1} 房间数: {2} 连接数: {3}".Format(clientId, room.roomName, rooms.Count, clients.Count));
+                    Service.Log.Info("客户端 {0} 创建房间。 房间名称: {1} 房间数: {2} 连接数: {3}".Format(clientId, room.roomName, rooms.Count, clients.Count));
 
                     using var writer = MemoryWriter.Pop();
                     writer.WriteByte((byte)Lobby.创建房间成功);
@@ -133,7 +133,7 @@ namespace Astraia.Net
                     {
                         room.clients.Add(clientId);
                         clients.Add(clientId, room);
-                        Log.Info(("客户端 {0} 加入房间。 房间名称: {1} 房间数: {2} 连接数: {3}".Format(clientId, room.roomName, rooms.Count, clients.Count)));
+                        Service.Log.Info(("客户端 {0} 加入房间。 房间名称: {1} 房间数: {2} 连接数: {3}".Format(clientId, room.roomName, rooms.Count, clients.Count)));
 
                         using var writer = MemoryWriter.Pop();
                         writer.WriteByte((byte)Lobby.加入房间成功);
@@ -170,7 +170,7 @@ namespace Astraia.Net
                     {
                         if (message.Count > transport.GetLength(channel))
                         {
-                            Log.Warn("接收消息大小过大！消息大小: {0}".Format(message.Count));
+                            Service.Log.Warn("接收消息大小过大！消息大小: {0}".Format(message.Count));
                             ServerDisconnect(clientId);
                             return;
                         }
@@ -234,7 +234,7 @@ namespace Astraia.Net
             }
             catch (Exception e)
             {
-                Log.Error(e.ToString());
+                Service.Log.Error(e.ToString());
                 transport.Disconnect(clientId);
             }
         }

@@ -30,18 +30,18 @@ namespace Astraia.Net
 
         private async Task MainAsync()
         {
-            Log.Setup(Info, Warn, Error);
+            Service.Log.Setup(Info, Warn, Error);
             var transport = new Transport();
             transport.Awake();
             try
             {
-                Log.Info("运行服务器...");
+                Service.Log.Info("运行服务器...");
                 if (!File.Exists("setting.json"))
                 {
                     var contents = JsonConvert.SerializeObject(new Setting(), Formatting.Indented);
                     File.WriteAllText("setting.json", contents);
 
-                    Log.Warn("请将 setting.json 文件配置正确并重新运行。");
+                    Service.Log.Warn("请将 setting.json 文件配置正确并重新运行。");
                     Console.ReadKey();
                     Environment.Exit(0);
                     return;
@@ -49,11 +49,11 @@ namespace Astraia.Net
 
                 Setting = JsonConvert.DeserializeObject<Setting>(File.ReadAllText("setting.json"));
 
-                Log.Info("加载程序集...");
+                Service.Log.Info("加载程序集...");
                 Assembly.LoadFile(Path.GetFullPath("Astraia.dll"));
                 Assembly.LoadFile(Path.GetFullPath("Astraia.Kcp.dll"));
 
-                Log.Info("初始化传输类...");
+                Service.Log.Info("初始化传输类...");
                 Process = new Process(transport);
 
                 transport.port = Setting.HttpPort;
@@ -62,12 +62,12 @@ namespace Astraia.Net
                 transport.OnServerDisconnect = Process.ServerDisconnect;
                 transport.StartServer();
 
-                Log.Info("开始进行传输...");
-                HttpServer.StartServer(Setting.HttpPort, HttpThread);
+                Service.Log.Info("开始进行传输...");
+                Service.Http.Start(Setting.HttpPort, HttpThread);
             }
             catch (Exception e)
             {
-                Log.Error(e.ToString());
+                Service.Log.Error(e.ToString());
                 Console.ReadKey();
                 Environment.Exit(0);
             }
