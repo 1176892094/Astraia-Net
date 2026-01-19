@@ -31,7 +31,7 @@ namespace Astraia.Net
         private async Task MainAsync()
         {
             Service.Log.Setup(Info, Warn, Error);
-            var transport = new Transport();
+            var transport = new NetworkTransport();
             transport.Awake();
             try
             {
@@ -57,9 +57,9 @@ namespace Astraia.Net
                 Process = new Process(transport);
 
                 transport.port = Setting.HttpPort;
-                transport.OnServerConnect = Process.ServerConnect;
-                transport.OnServerReceive = Process.ServerReceive;
-                transport.OnServerDisconnect = Process.ServerDisconnect;
+                transport.server.Connect = Process.ServerConnect;
+                transport.server.Receive = Process.ServerReceive;
+                transport.server.Disconnect = Process.ServerDisconnect;
                 transport.StartServer();
 
                 Service.Log.Info("开始进行传输...");

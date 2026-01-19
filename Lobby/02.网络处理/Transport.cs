@@ -14,147 +14,128 @@ using Astraia.Common;
 
 namespace Astraia
 {
-    internal sealed class Transport
+    internal abstract class Transport
     {
         public string address = "localhost";
         public ushort port = 20974;
-        public uint unitData = 1200;
-        public uint overTime = 10000;
-        public uint interval = 10;
-        public uint deadLink = 40;
-        public uint fastResend = 2;
-        public uint sendWindow = 1024 * 4;
-        public uint receiveWindow = 1024 * 4;
 
-        private Client client;
-        private Server server;
+        public readonly Client.Delegate client = new Client.Delegate();
+        public readonly Server.Delegate server = new Server.Delegate();
 
-        // public Action OnClientConnect;
-        // public Action OnClientDisconnect;
-        // public Action<ArraySegment<byte>, int> OnClientReceive;
-        public Action<int> OnServerConnect;
-        public Action<int> OnServerDisconnect;
-        public Action<int, ArraySegment<byte>, int> OnServerReceive;
+        public abstract uint GetLength(int channel);
+        public abstract void SendToClient(int clientId, ArraySegment<byte> segment, int channel = Channel.Reliable);
+        public abstract void SendToServer(ArraySegment<byte> segment, int channel = Channel.Reliable);
+        public abstract void StartServer();
+        public abstract void StopServer();
+        public abstract void Disconnect(int clientId);
+        public abstract void StartClient();
+        public abstract void StartClient(Uri uri);
+        public abstract void Disconnect();
+        public abstract void ClientEarlyUpdate();
+        public abstract void ClientAfterUpdate();
+        public abstract void ServerEarlyUpdate();
+        public abstract void ServerAfterUpdate();
+    }
+
+    internal sealed class NetworkTransport : Transport
+    {
+        private const uint MAX_MTU = 1200;
+        private const uint OVER_TIME = 10000;
+        private const uint INTERVAL = 10;
+        private const uint DEAD_LINK = 40;
+        private const uint FAST_RESEND = 2;
+        private const uint SEND_WIN = 1024 * 4;
+        private const uint RECEIVE_WIN = 1024 * 4;
+
+        private Client clientAgent;
+        private Server serverAgent;
 
         public void Awake()
         {
-            var setting = new Setting(unitData, overTime, interval, deadLink, fastResend, sendWindow, receiveWindow);
-            client = new Client(setting, ClientConnect, ClientDisconnect, ClientError, ClientReceive);
-            server = new Server(setting, ServerConnect, ServerDisconnect, ServerError, ServerReceive);
-            return;
-
-            void ClientConnect()
-            {
-                // OnClientConnect.Invoke();
-            }
-
-            void ClientDisconnect()
-            {
-                // OnClientDisconnect.Invoke();
-            }
-
-            void ClientError(Error error, string message)
-            {
-            }
-
-            void ClientReceive(ArraySegment<byte> message, int channel)
-            {
-                // OnClientReceive.Invoke(message, channel);
-            }
-
-            void ServerConnect(int clientId)
-            {
-                OnServerConnect.Invoke(clientId);
-            }
-
-            void ServerDisconnect(int clientId)
-            {
-                OnServerDisconnect.Invoke(clientId);
-            }
-
-            void ServerError(int clientId, Error error, string message)
+            var setting = new Setting(MAX_MTU, OVER_TIME, INTERVAL, DEAD_LINK, FAST_RESEND, SEND_WIN, RECEIVE_WIN);
+            clientAgent = new Client(setting, client);
+            serverAgent = new Server(setting, server);
+            server.Error = (clientId, error, message) =>
             {
                 if (error != Error.解析失败 && error != Error.连接超时)
                 {
                     Service.Log.Warn("客户端: {0}  错误代码: {1}\n{2}".Format(clientId, error, message));
                 }
-            }
-
-            void ServerReceive(int clientId, ArraySegment<byte> message, int channel)
-            {
-                OnServerReceive.Invoke(clientId, message, channel);
-            }
+            };
         }
 
         public void Update()
         {
-            server.EarlyUpdate();
-            server.AfterUpdate();
+            serverAgent.EarlyUpdate();
+            serverAgent.AfterUpdate();
         }
 
-        public uint GetLength(int channel)
+        public override uint GetLength(int channel)
         {
-            return channel == Channel.Reliable ? Peer.KcpLength(unitData, receiveWindow) : Peer.UdpLength(unitData);
+            return channel == Channel.Reliable ? Peer.KcpLength(MAX_MTU, RECEIVE_WIN) : Peer.UdpLength(MAX_MTU);
         }
 
-        public void StartServer()
+        public override void SendToClient(int clientId, ArraySegment<byte> segment, int channel = Channel.Reliable)
         {
-            server.Connect(port);
+            serverAgent.Send(clientId, segment, channel);
+            server.Send?.Invoke(clientId, segment, channel);
         }
 
-        public void StopServer()
+        public override void SendToServer(ArraySegment<byte> segment, int channel = Channel.Reliable)
         {
-            server.StopServer();
+            clientAgent.Send(segment, channel);
+            client.onSend?.Invoke(segment, channel);
         }
 
-        public void Disconnect(int clientId)
+        public override void StartServer()
         {
-            server.Disconnect(clientId);
+            serverAgent.Connect(port);
         }
 
-        public void SendToClient(int clientId, ArraySegment<byte> segment, int channel = Channel.Reliable)
+        public override void StopServer()
         {
-            server.Send(clientId, segment, channel);
+            serverAgent.StopServer();
         }
 
-        public void StartClient()
+        public override void Disconnect(int clientId)
         {
-            client.Connect(address, port);
+            serverAgent.Disconnect(clientId);
         }
 
-        public void StartClient(Uri uri)
+        public override void StartClient()
         {
-            client.Connect(uri.Host, (ushort)(uri.IsDefaultPort ? port : uri.Port));
+            clientAgent.Connect(address, port);
         }
 
-        public void Disconnect()
+        public override void StartClient(Uri uri)
         {
-            client.Disconnect();
+            clientAgent.Connect(uri.Host, (ushort)(uri.IsDefaultPort ? port : uri.Port));
         }
 
-        public void SendToServer(ArraySegment<byte> segment, int channel = Channel.Reliable)
+        public override void Disconnect()
         {
-            client.Send(segment, channel);
+            clientAgent.Disconnect();
         }
 
-        public void ClientEarlyUpdate()
+        public override void ClientEarlyUpdate()
         {
-            client.EarlyUpdate();
+            clientAgent.EarlyUpdate();
         }
 
-        public void ClientAfterUpdate()
+        public override void ClientAfterUpdate()
         {
-            client.AfterUpdate();
+            clientAgent.AfterUpdate();
         }
 
-        public void ServerEarlyUpdate()
+        public override void ServerEarlyUpdate()
         {
-            server.EarlyUpdate();
+            serverAgent.EarlyUpdate();
         }
 
-        public void ServerAfterUpdate()
+        public override void ServerAfterUpdate()
         {
-            server.AfterUpdate();
+            serverAgent.AfterUpdate();
         }
     }
+
 }
