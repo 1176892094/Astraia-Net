@@ -36,15 +36,13 @@ namespace Astraia.Net
             try
             {
                 Service.Log.Info("运行服务器...");
-                string setting;
                 if (!File.Exists("setting.json"))
                 {
-                    setting = JsonConvert.SerializeObject(new Setting(), Formatting.Indented);
+                    var setting = JsonConvert.SerializeObject(new Setting(), Formatting.Indented);
                     File.WriteAllText("setting.json", setting);
                 }
 
-                setting = File.ReadAllText("setting.json");
-                Setting = JsonConvert.DeserializeObject<Setting>(setting);
+                Setting = JsonConvert.DeserializeObject<Setting>(File.ReadAllText("setting.json"));
 
                 Service.Log.Info("加载程序集...");
                 Assembly.LoadFile(Path.GetFullPath("Astraia.dll"));
@@ -58,11 +56,11 @@ namespace Astraia.Net
                 }
 
                 Transport.port = port;
-                Transport.server.Connect = Process.Connect;
-                Transport.server.Receive = Process.Receive;
-                Transport.server.Disconnect = Process.Disconnect;
+                Transport.server.Connect = Common.Connect;
+                Transport.server.Receive = Common.Receive;
+                Transport.server.Disconnect = Common.Disconnect;
                 Transport.StartServer();
-                
+
                 Service.Http.Start(port, HttpThread);
                 Service.Log.Info("开始进行传输...");
             }
@@ -110,7 +108,7 @@ namespace Astraia.Net
         {
             if (request.HttpMethod == "GET" && request.Url.AbsolutePath == "/api/compressed/servers")
             {
-                var readJson = JsonConvert.SerializeObject(Process.Rooms);
+                var readJson = JsonConvert.SerializeObject(Common.Rooms);
                 readJson = Service.Zip.Compress(readJson);
                 var readBytes = Service.Text.GetBytes(readJson);
                 response.StatusCode = (int)HttpStatusCode.OK;

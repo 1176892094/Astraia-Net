@@ -49,7 +49,7 @@ namespace Astraia.Net
                 return null;
             }
 
-            return "Server=localhost;Database={1};User ID={2};Password={3};".Format(Database, username, password);
+            return "Server=localhost;Database={0};User ID={1};Password={2};".Format(Database, username, password);
         }
     }
 }

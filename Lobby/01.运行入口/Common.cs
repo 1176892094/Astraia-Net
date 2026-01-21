@@ -15,7 +15,7 @@ using System.Linq;
 
 namespace Astraia.Net
 {
-    internal static class Process
+    internal static class Common
     {
         private static readonly Dictionary<string, Room> rooms = new Dictionary<string, Room>();
         private static readonly Dictionary<int, Room> clients = new Dictionary<int, Room>();

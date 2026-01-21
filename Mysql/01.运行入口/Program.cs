@@ -38,20 +38,18 @@ namespace Astraia.Net
             try
             {
                 Service.Log.Info("运行服务器...");
-                string setting;
                 if (!File.Exists("service.json"))
                 {
-                    setting = JsonConvert.SerializeObject(new Setting(), Formatting.Indented);
+                    var setting = JsonConvert.SerializeObject(new Setting(), Formatting.Indented);
                     File.WriteAllText("service.json", setting);
                     Service.Log.Warn("请将 service.json 文件配置正确并重新运行。");
                     Console.ReadKey();
                     Environment.Exit(0);
                     return;
                 }
-
-                setting = File.ReadAllText("service.json");
-                Setting = JsonConvert.DeserializeObject<Setting>(setting);
                 
+                Setting = JsonConvert.DeserializeObject<Setting>(File.ReadAllText("service.json"));
+
                 Service.Log.Info("加载程序集...");
                 Assembly.LoadFile(Path.GetFullPath("Astraia.dll"));
                 Assembly.LoadFile(Path.GetFullPath("Astraia.Kcp.dll"));
