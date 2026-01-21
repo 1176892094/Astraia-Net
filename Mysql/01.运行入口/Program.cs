@@ -29,62 +29,73 @@ namespace Astraia.Net
 
         private static void Main(string[] args)
         {
-            new Program().StartServer();
+            StartAsync(args);
         }
 
-        private void StartServer()
+        private static void StartAsync(string[] args)
         {
             Service.Log.Setup(Info, Warn, Error);
             try
             {
                 Service.Log.Info("运行服务器...");
+                string setting;
                 if (!File.Exists("service.json"))
                 {
-                    var contents = JsonConvert.SerializeObject(new Setting(), Formatting.Indented);
-                    File.WriteAllText("service.json", contents);
+                    setting = JsonConvert.SerializeObject(new Setting(), Formatting.Indented);
+                    File.WriteAllText("service.json", setting);
                     Service.Log.Warn("请将 service.json 文件配置正确并重新运行。");
                     Console.ReadKey();
                     Environment.Exit(0);
                     return;
                 }
 
-                Setting = JsonConvert.DeserializeObject<Setting>(File.ReadAllText("service.json"));
+                setting = File.ReadAllText("service.json");
+                Setting = JsonConvert.DeserializeObject<Setting>(setting);
+                
                 Service.Log.Info("加载程序集...");
                 Assembly.LoadFile(Path.GetFullPath("Astraia.dll"));
                 Assembly.LoadFile(Path.GetFullPath("Astraia.Kcp.dll"));
 
-                Service.Log.Info("开始进行传输...");
+                Service.Log.Info("传输初始化...");
+                var port = Setting.ServerPort;
+                if (args.Length > 0 && ushort.TryParse(args[0], out var result))
+                {
+                    port = result;
+                }
+
                 SetupDailyCleanup();
                 CleanupInactivePlayers();
-                Service.Http.Start(Setting.HttpPort, HttpThread);
-                Console.ReadKey();
+
+                Service.Http.Start(port, HttpThread);
+                Service.Log.Info("开始进行传输...");
             }
             catch (Exception e)
             {
                 Service.Log.Error(e.ToString());
                 Console.ReadKey();
                 Environment.Exit(0);
+                return;
             }
 
-            return;
+            Console.ReadKey();
+        }
 
-            void Info(string message)
-            {
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
-            }
+        private static void Info(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
+        }
 
-            void Warn(string message)
-            {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
-            }
+        private static void Warn(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
+        }
 
-            void Error(string message)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
-            }
+        private static void Error(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
         }
 
         private static async Task HttpThread(HttpListenerRequest request, HttpListenerResponse response)
@@ -164,7 +175,7 @@ namespace Astraia.Net
         private static LoginResponse UpdateLoginTime(Command connection, LoginRequest request, LoginResponse response)
         {
             var parameter = new Dictionary<string, object> { { "@deviceData", request.settingManager.deviceData } };
-            var dataTables = Process.Select<LoginTable>(connection, "deviceData = @deviceData", parameter);
+            var dataTables = Common.Select<LoginTable>(connection, "deviceData = @deviceData", parameter);
             foreach (var dataTable in dataTables)
             {
                 if (dataTable.recordTime > DateTime.Parse(request.settingManager.recordTime))
@@ -185,11 +196,11 @@ namespace Astraia.Net
         private static long UpdateOrInsert(Command connection, LoginRequest request, long userData)
         {
             var parameters = new Dictionary<string, object> { { "@deviceData", request.settingManager.deviceData } };
-            var dataTables = Process.Select<LoginTable>(connection, "deviceData = @deviceData", parameters);
+            var dataTables = Common.Select<LoginTable>(connection, "deviceData = @deviceData", parameters);
             if (dataTables.Count == 0)
             {
                 Service.Log.Warn(request.settingManager.deviceData);
-                Process.Insert<LoginTable>(connection, new Dictionary<string, object>
+                Common.Insert<LoginTable>(connection, new Dictionary<string, object>
                 {
                     { "deviceData", request.settingManager.deviceData },
                     { "userData", userData },
@@ -199,12 +210,12 @@ namespace Astraia.Net
                     { "playerData3", JsonConvert.SerializeObject(request.playerData3) },
                     { "playerData4", JsonConvert.SerializeObject(request.playerData4) },
                 });
-                dataTables = Process.Select<LoginTable>(connection, "deviceData = @deviceData", parameters);
+                dataTables = Common.Select<LoginTable>(connection, "deviceData = @deviceData", parameters);
                 return dataTables.Select(dataTable => dataTable.userName).FirstOrDefault();
             }
 
             var parameter = new KeyValuePair<string, object>("deviceData", request.settingManager.deviceData);
-            Process.Update<LoginTable>(connection, parameter, new Dictionary<string, object>
+            Common.Update<LoginTable>(connection, parameter, new Dictionary<string, object>
             {
                 { "userData", userData },
                 { "settingManager", JsonConvert.SerializeObject(request.settingManager) },
@@ -218,7 +229,7 @@ namespace Astraia.Net
         }
 
 
-        private void SetupDailyCleanup()
+        private static void SetupDailyCleanup()
         {
             cleanupTimer = new Timer();
             cleanupTimer.AutoReset = true;
@@ -244,12 +255,12 @@ namespace Astraia.Net
                 var connection = new Command(database);
 
                 var parameters = new Dictionary<string, object> { { "@threshold", DateTime.Now.AddDays(-7) } };
-                var inactivePlayers = Process.Select<LoginTable>(connection, "recordTime < @threshold", parameters);
+                var inactivePlayers = Common.Select<LoginTable>(connection, "recordTime < @threshold", parameters);
 
                 var deletedCount = 0;
                 foreach (var player in inactivePlayers)
                 {
-                    Process.Delete<LoginTable>(connection, player.deviceData);
+                    Common.Delete<LoginTable>(connection, player.deviceData);
                     deletedCount++;
                 }
 

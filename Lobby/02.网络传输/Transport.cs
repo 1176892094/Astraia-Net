@@ -10,7 +10,6 @@
 // *********************************************************************************
 
 using System;
-using Astraia.Common;
 
 namespace Astraia
 {
@@ -19,8 +18,8 @@ namespace Astraia
         public string address = "localhost";
         public ushort port = 20974;
 
-        public readonly Client.Delegate client = new Client.Delegate();
-        public readonly Server.Delegate server = new Server.Delegate();
+        public readonly KcpClient.Event client = new KcpClient.Event();
+        public readonly KcpServer.Event server = new KcpServer.Event();
 
         public abstract uint GetLength(int channel);
         public abstract void SendToClient(int clientId, ArraySegment<byte> segment, int channel = Channel.Reliable);
@@ -30,12 +29,13 @@ namespace Astraia
         public abstract void Disconnect(int clientId);
         public abstract void StartClient();
         public abstract void StartClient(Uri uri);
-        public abstract void Disconnect();
+        public abstract void StopClient();
         public abstract void ClientEarlyUpdate();
         public abstract void ClientAfterUpdate();
         public abstract void ServerEarlyUpdate();
         public abstract void ServerAfterUpdate();
     }
+
 
     internal sealed class NetworkTransport : Transport
     {
@@ -47,95 +47,96 @@ namespace Astraia
         private const uint SEND_WIN = 1024 * 4;
         private const uint RECEIVE_WIN = 1024 * 4;
 
-        private Client clientAgent;
-        private Server serverAgent;
+        private KcpClient kcpClient;
+        private KcpServer kcpServer;
 
         public void Awake()
         {
             var setting = new Setting(MAX_MTU, OVER_TIME, INTERVAL, DEAD_LINK, FAST_RESEND, SEND_WIN, RECEIVE_WIN);
-            clientAgent = new Client(setting, client);
-            serverAgent = new Server(setting, server);
-            server.Error = (clientId, error, message) =>
+            kcpClient = new KcpClient(setting, client);
+            kcpServer = new KcpServer(setting, server);
+            server.Error = OnError;
+        }
+
+        private static void OnError(int clientId, Error error, string message)
+        {
+            if (error != Error.解析失败 && error != Error.连接超时)
             {
-                if (error != Error.解析失败 && error != Error.连接超时)
-                {
-                    Service.Log.Warn("客户端: {0}  错误代码: {1}\n{2}".Format(clientId, error, message));
-                }
-            };
+                Service.Log.Warn("客户端: {0}  错误代码: {1}\n{2}".Format(clientId, error, message));
+            }
         }
 
         public void Update()
         {
-            serverAgent.EarlyUpdate();
-            serverAgent.AfterUpdate();
+            kcpServer.EarlyUpdate();
+            kcpServer.AfterUpdate();
         }
 
         public override uint GetLength(int channel)
         {
-            return channel == Channel.Reliable ? Peer.KcpLength(MAX_MTU, RECEIVE_WIN) : Peer.UdpLength(MAX_MTU);
+            return channel == Channel.Reliable ? KcpPeer.KcpLength(MAX_MTU, RECEIVE_WIN) : KcpPeer.UdpLength(MAX_MTU);
         }
 
         public override void SendToClient(int clientId, ArraySegment<byte> segment, int channel = Channel.Reliable)
         {
-            serverAgent.Send(clientId, segment, channel);
-            server.Send?.Invoke(clientId, segment, channel);
+            kcpServer.Send(clientId, segment, channel);
+            server.Send?.Invoke(clientId, segment);
         }
 
         public override void SendToServer(ArraySegment<byte> segment, int channel = Channel.Reliable)
         {
-            clientAgent.Send(segment, channel);
-            client.onSend?.Invoke(segment, channel);
+            kcpClient.Send(segment, channel);
+            client.Send?.Invoke(segment);
         }
 
         public override void StartServer()
         {
-            serverAgent.Connect(port);
+            kcpServer.Connect(port);
         }
 
         public override void StopServer()
         {
-            serverAgent.StopServer();
+            kcpServer.StopServer();
         }
 
         public override void Disconnect(int clientId)
         {
-            serverAgent.Disconnect(clientId);
+            kcpServer.Disconnect(clientId);
         }
 
         public override void StartClient()
         {
-            clientAgent.Connect(address, port);
+            kcpClient.Connect(address, port);
         }
 
         public override void StartClient(Uri uri)
         {
-            clientAgent.Connect(uri.Host, (ushort)(uri.IsDefaultPort ? port : uri.Port));
+            kcpClient.Connect(uri.Host, (ushort)(uri.IsDefaultPort ? port : uri.Port));
         }
 
-        public override void Disconnect()
+        public override void StopClient()
         {
-            clientAgent.Disconnect();
+            kcpClient.Disconnect();
         }
 
         public override void ClientEarlyUpdate()
         {
-            clientAgent.EarlyUpdate();
+            kcpClient.EarlyUpdate();
         }
 
         public override void ClientAfterUpdate()
         {
-            clientAgent.AfterUpdate();
+            kcpClient.AfterUpdate();
         }
 
         public override void ServerEarlyUpdate()
         {
-            serverAgent.EarlyUpdate();
+            kcpServer.EarlyUpdate();
         }
 
         public override void ServerAfterUpdate()
         {
-            serverAgent.AfterUpdate();
+            kcpServer.AfterUpdate();
         }
     }
-
 }

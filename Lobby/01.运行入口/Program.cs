@@ -18,103 +18,105 @@ using Newtonsoft.Json;
 
 namespace Astraia.Net
 {
-    internal class Program
+    internal static class Program
     {
+        public static NetworkTransport Transport;
         public static Setting Setting;
-        public static Process Process;
 
         public static void Main(string[] args)
         {
-            new Program().MainAsync().GetAwaiter().GetResult();
+            StartAsync(args).GetAwaiter().GetResult();
         }
 
-        private async Task MainAsync()
+        private static async Task StartAsync(string[] args)
         {
             Service.Log.Setup(Info, Warn, Error);
-            var transport = new NetworkTransport();
-            transport.Awake();
+            Transport = new NetworkTransport();
+            Transport.Awake();
             try
             {
                 Service.Log.Info("运行服务器...");
+                string setting;
                 if (!File.Exists("setting.json"))
                 {
-                    var contents = JsonConvert.SerializeObject(new Setting(), Formatting.Indented);
-                    File.WriteAllText("setting.json", contents);
-
-                    Service.Log.Warn("请将 setting.json 文件配置正确并重新运行。");
-                    Console.ReadKey();
-                    Environment.Exit(0);
-                    return;
+                    setting = JsonConvert.SerializeObject(new Setting(), Formatting.Indented);
+                    File.WriteAllText("setting.json", setting);
                 }
 
-                Setting = JsonConvert.DeserializeObject<Setting>(File.ReadAllText("setting.json"));
+                setting = File.ReadAllText("setting.json");
+                Setting = JsonConvert.DeserializeObject<Setting>(setting);
 
                 Service.Log.Info("加载程序集...");
                 Assembly.LoadFile(Path.GetFullPath("Astraia.dll"));
                 Assembly.LoadFile(Path.GetFullPath("Astraia.Kcp.dll"));
 
-                Service.Log.Info("初始化传输类...");
-                Process = new Process(transport);
+                Service.Log.Info("传输初始化...");
+                var port = Setting.ServerPort;
+                if (args.Length > 0 && ushort.TryParse(args[0], out var result))
+                {
+                    port = result;
+                }
 
-                transport.port = Setting.HttpPort;
-                transport.server.Connect = Process.ServerConnect;
-                transport.server.Receive = Process.ServerReceive;
-                transport.server.Disconnect = Process.ServerDisconnect;
-                transport.StartServer();
-
+                Transport.port = port;
+                Transport.server.Connect = Process.Connect;
+                Transport.server.Receive = Process.Receive;
+                Transport.server.Disconnect = Process.Disconnect;
+                Transport.StartServer();
+                
+                Service.Http.Start(port, HttpThread);
                 Service.Log.Info("开始进行传输...");
-                Service.Http.Start(Setting.HttpPort, HttpThread);
             }
             catch (Exception e)
             {
                 Service.Log.Error(e.ToString());
                 Console.ReadKey();
                 Environment.Exit(0);
+                return;
             }
 
             while (true)
             {
-                transport.Update();
-                await Task.Delay(Setting.UpdateTime);
+                try
+                {
+                    Transport.Update();
+                    await Task.Delay(10);
+                }
+                catch (Exception e)
+                {
+                    Service.Log.Warn(e.ToString());
+                }
             }
+        }
 
-            void Info(string message)
-            {
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
-            }
+        private static void Info(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
+        }
 
-            void Warn(string message)
-            {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
-            }
+        private static void Warn(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
+        }
 
-            void Error(string message)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
-            }
+        private static void Error(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("[{0}] {1}".Format(DateTime.Now.ToString("MM-dd HH:mm:ss"), message));
         }
 
         private static async Task HttpThread(HttpListenerRequest request, HttpListenerResponse response)
         {
             if (request.HttpMethod == "GET" && request.Url.AbsolutePath == "/api/compressed/servers")
             {
-                if (Setting.RequestRoom)
-                {
-                    var readJson = JsonConvert.SerializeObject(Process.roomData);
-                    readJson = Service.Zip.Compress(readJson);
-                    var readBytes = Service.Text.GetBytes(readJson);
-                    response.StatusCode = (int)HttpStatusCode.OK;
-                    response.ContentType = "text/plain; charset=utf-8";
-                    response.ContentLength64 = readBytes.Length;
-                    await response.OutputStream.WriteAsync(readBytes, 0, readBytes.Length);
-                }
-                else
-                {
-                    response.StatusCode = (int)HttpStatusCode.Forbidden;
-                }
+                var readJson = JsonConvert.SerializeObject(Process.Rooms);
+                readJson = Service.Zip.Compress(readJson);
+                var readBytes = Service.Text.GetBytes(readJson);
+                response.StatusCode = (int)HttpStatusCode.OK;
+                response.ContentType = "text/plain; charset=utf-8";
+                response.ContentLength64 = readBytes.Length;
+                await response.OutputStream.WriteAsync(readBytes, 0, readBytes.Length);
             }
         }
     }

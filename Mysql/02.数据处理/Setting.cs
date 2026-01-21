@@ -17,20 +17,15 @@ namespace Astraia.Net
     internal class Setting
     {
         /// <summary>
-        /// 连接地址
-        /// </summary>
-        public string Address = "localhost";
-        
-        /// <summary>
         /// 数据库
         /// </summary>
         public string Database = "Database";
-        
+
         /// <summary>
         /// 用户名
         /// </summary>
         public string Username = "root";
-        
+
         /// <summary>
         /// 密码
         /// </summary>
@@ -39,8 +34,8 @@ namespace Astraia.Net
         /// <summary>
         /// Rest服务器端口
         /// </summary>
-        public ushort HttpPort = 20974;
-        
+        public ushort ServerPort = 20974;
+
         /// <summary>
         /// 获取数据库连接
         /// </summary>
@@ -53,8 +48,8 @@ namespace Astraia.Net
             {
                 return null;
             }
-        
-            return "Server={0};Database={1};User ID={2};Password={3};".Format(Address, Database, username, password);
+
+            return "Server=localhost;Database={1};User ID={2};Password={3};".Format(Database, username, password);
         }
     }
 }

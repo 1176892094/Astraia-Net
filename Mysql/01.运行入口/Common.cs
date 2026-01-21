@@ -17,7 +17,7 @@ using System.Reflection;
 
 namespace Astraia.Net
 {
-    internal static class Process
+    internal static class Common
     {
         public static int Insert<T>(Command proxy, T entity)
         {

@@ -15,6 +15,20 @@ using System.Collections.Generic;
 namespace Astraia.Net
 {
     [Serializable]
+    internal class Setting
+    {
+        /// <summary>
+        /// 服务器密钥
+        /// </summary>
+        public string ServerId = Guid.NewGuid().ToString();
+
+        /// <summary>
+        /// 服务器端口
+        /// </summary>
+        public ushort ServerPort = 8080;
+    }
+
+    [Serializable]
     internal class Room
     {
         /// <summary>
