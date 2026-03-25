@@ -46,7 +46,6 @@ namespace Astraia.Net
 
                 Log.Info("加载程序集...");
                 Assembly.LoadFile(Path.GetFullPath("Astraia.dll"));
-                Assembly.LoadFile(Path.GetFullPath("Astraia.Kcp.dll"));
 
                 Log.Info("传输初始化...");
                 var port = Setting.ServerPort;
