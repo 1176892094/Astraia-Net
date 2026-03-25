@@ -62,7 +62,7 @@ namespace Astraia
         {
             if (error != Error.解析失败 && error != Error.连接超时)
             {
-                Service.Log.Warn("客户端: {0}  错误代码: {1}\n{2}".Format(clientId, error, message));
+                Log.Warn("客户端: {0}  错误代码: {1}\n{2}".Format(clientId, error, message));
             }
         }
 

@@ -34,15 +34,15 @@ namespace Astraia.Net
 
         private static void StartAsync(string[] args)
         {
-            Service.Log.Setup(Info, Warn, Error);
+            Log.Setup(Info, Warn, Error);
             try
             {
-                Service.Log.Info("运行服务器...");
+                Log.Info("运行服务器...");
                 if (!File.Exists("service.json"))
                 {
                     var setting = JsonConvert.SerializeObject(new Setting(), Formatting.Indented);
                     File.WriteAllText("service.json", setting);
-                    Service.Log.Warn("请将 service.json 文件配置正确并重新运行。");
+                    Log.Warn("请将 service.json 文件配置正确并重新运行。");
                     Console.ReadKey();
                     Environment.Exit(0);
                     return;
@@ -50,11 +50,11 @@ namespace Astraia.Net
                 
                 Setting = JsonConvert.DeserializeObject<Setting>(File.ReadAllText("service.json"));
 
-                Service.Log.Info("加载程序集...");
+                Log.Info("加载程序集...");
                 Assembly.LoadFile(Path.GetFullPath("Astraia.dll"));
                 Assembly.LoadFile(Path.GetFullPath("Astraia.Kcp.dll"));
 
-                Service.Log.Info("传输初始化...");
+                Log.Info("传输初始化...");
                 var port = Setting.ServerPort;
                 if (args.Length > 0 && ushort.TryParse(args[0], out var result))
                 {
@@ -64,12 +64,12 @@ namespace Astraia.Net
                 SetupDailyCleanup();
                 CleanupInactivePlayers();
 
-                Service.Http.Start(port, HttpThread);
-                Service.Log.Info("开始进行传输...");
+                Host.Start(port, HttpThread);
+                Log.Info("开始进行传输...");
             }
             catch (Exception e)
             {
-                Service.Log.Error(e.ToString());
+                Log.Error(e.ToString());
                 Console.ReadKey();
                 Environment.Exit(0);
                 return;
@@ -107,13 +107,13 @@ namespace Astraia.Net
                     readBytes = memoryStream.ToArray();
                 }
 
-                readBytes = Service.Xor.Decrypt(readBytes);
-                var readJson = Service.Text.GetString(readBytes);
-                readJson = Service.Zip.Decompress(readJson);
+                readBytes = Xor.Decrypt(readBytes);
+                var readJson = Text.GetString(readBytes);
+                readJson = Zip.Decompress(readJson);
                 var result = JsonConvert.DeserializeObject<LoginRequest>(readJson);
-                readJson = Service.Zip.Compress(Login(result));
-                readBytes = Service.Text.GetBytes(readJson);
-                readBytes = Service.Xor.Encrypt(readBytes);
+                readJson = Zip.Compress(Login(result));
+                readBytes = Text.GetBytes(readJson);
+                readBytes = Xor.Encrypt(readBytes);
                 response.ContentType = "application/octet-stream";
                 response.ContentLength64 = readBytes.Length;
                 await response.OutputStream.WriteAsync(readBytes, 0, readBytes.Length);
@@ -157,14 +157,14 @@ namespace Astraia.Net
                     }
 
                     watch.Stop();
-                    Service.Log.Info("用户 {0} 数据更新成功。耗时 {1} 秒".Format(response.userName, watch.ElapsedMilliseconds / 1000F));
+                    Log.Info("用户 {0} 数据更新成功。耗时 {1} 秒".Format(response.userName, watch.ElapsedMilliseconds / 1000F));
                 }
 
                 return JsonConvert.SerializeObject(response);
             }
             catch (Exception e)
             {
-                Service.Log.Error(e.Message);
+                Log.Error(e.Message);
                 response.codeData = 2;
                 return JsonConvert.SerializeObject(response);
             }
@@ -178,7 +178,7 @@ namespace Astraia.Net
             {
                 if (dataTable.recordTime > DateTime.Parse(request.settingManager.recordTime))
                 {
-                    Service.Log.Error("用户 {0} 数据更新失败！".Format(dataTable.userName));
+                    Log.Error("用户 {0} 数据更新失败！".Format(dataTable.userName));
                     response.codeData = 1;
                 }
 
@@ -197,7 +197,7 @@ namespace Astraia.Net
             var dataTables = Common.Select<LoginTable>(connection, "deviceData = @deviceData", parameters);
             if (dataTables.Count == 0)
             {
-                Service.Log.Warn(request.settingManager.deviceData);
+                Log.Warn(request.settingManager.deviceData);
                 Common.Insert<LoginTable>(connection, new Dictionary<string, object>
                 {
                     { "deviceData", request.settingManager.deviceData },
@@ -262,11 +262,11 @@ namespace Astraia.Net
                     deletedCount++;
                 }
 
-                Service.Log.Info("清理 {0} 名 7 天未登录玩家。".Format(deletedCount));
+                Log.Info("清理 {0} 名 7 天未登录玩家。".Format(deletedCount));
             }
             catch (Exception e)
             {
-                Service.Log.Error("清理未登录玩家失败：{0}".Format(e));
+                Log.Error("清理未登录玩家失败：{0}".Format(e));
             }
         }
     }
