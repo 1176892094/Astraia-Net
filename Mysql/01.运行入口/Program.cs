@@ -17,11 +17,12 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
-using System.Timers;
 using Newtonsoft.Json;
 
 namespace Astraia.Net
 {
+    using Timer = System.Timers.Timer;
+
     internal class Program
     {
         private static Setting Setting;
@@ -47,7 +48,7 @@ namespace Astraia.Net
                     Environment.Exit(0);
                     return;
                 }
-                
+
                 Setting = JsonConvert.DeserializeObject<Setting>(File.ReadAllText("service.json"));
 
                 Log.Info("加载程序集...");
@@ -187,7 +188,6 @@ namespace Astraia.Net
                 break;
             }
 
-
             return response;
         }
 
@@ -225,7 +225,6 @@ namespace Astraia.Net
             });
             return 0;
         }
-
 
         private static void SetupDailyCleanup()
         {
