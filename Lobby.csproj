@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>Astraia.Lobby</RootNamespace>
+        <AssemblyName>Astraia.Lobby</AssemblyName>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Reference Include="Astraia">
+        <HintPath>..\Astraia\Astraia.dll</HintPath>
+      </Reference>
+      <Reference Include="Newtonsoft.Json">
+        <HintPath>..\Packages\Newtonsoft.Json.13.0.3\lib\net6.0\Newtonsoft.Json.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+</Project>
