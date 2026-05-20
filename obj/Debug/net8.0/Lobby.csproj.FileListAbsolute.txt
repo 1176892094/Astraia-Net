@@ -5,7 +5,6 @@
 /Users/charlotte/Documents/GitHub/Astraia-Net/bin/Debug/net8.0/Astraia.Lobby.pdb
 /Users/charlotte/Documents/GitHub/Astraia-Net/bin/Debug/net8.0/Astraia.dll
 /Users/charlotte/Documents/GitHub/Astraia-Net/bin/Debug/net8.0/Newtonsoft.Json.dll
-/Users/charlotte/Documents/GitHub/Astraia-Net/bin/Debug/net8.0/Newtonsoft.Json.xml
 /Users/charlotte/Documents/GitHub/Astraia-Net/obj/Debug/net8.0/Lobby.csproj.AssemblyReference.cache
 /Users/charlotte/Documents/GitHub/Astraia-Net/obj/Debug/net8.0/Lobby.GeneratedMSBuildEditorConfig.editorconfig
 /Users/charlotte/Documents/GitHub/Astraia-Net/obj/Debug/net8.0/Lobby.AssemblyInfoInputs.cache

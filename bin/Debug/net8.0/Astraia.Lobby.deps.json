@@ -9,7 +9,6 @@
       "Astraia.Lobby/1.0.0": {
         "dependencies": {
           "Astraia": "1.0.0.0",
-          "Costura": "6.0.0.0",
           "Newtonsoft.Json": "13.0.0.0"
         },
         "runtime": {
@@ -21,14 +20,6 @@
           "Astraia.dll": {
             "assemblyVersion": "1.0.0.0",
             "fileVersion": "1.0.0.0"
-          }
-        }
-      },
-      "Costura/6.0.0.0": {
-        "runtime": {
-          "Costura.dll": {
-            "assemblyVersion": "6.0.0.0",
-            "fileVersion": "6.0.0.0"
           }
         }
       },
@@ -49,11 +40,6 @@
       "sha512": ""
     },
     "Astraia/1.0.0.0": {
-      "type": "reference",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "Costura/6.0.0.0": {
       "type": "reference",
       "serviceable": false,
       "sha512": ""

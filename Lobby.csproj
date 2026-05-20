@@ -15,7 +15,7 @@
         <HintPath>..\Astraia\Astraia.dll</HintPath>
       </Reference>
       <Reference Include="Newtonsoft.Json">
-        <HintPath>..\Packages\Newtonsoft.Json.13.0.3\lib\net6.0\Newtonsoft.Json.dll</HintPath>
+        <HintPath>Astraia\Newtonsoft.Json.dll</HintPath>
       </Reference>
     </ItemGroup>
 </Project>
