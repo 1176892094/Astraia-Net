@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Astraia.Lobby")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5e23a88a1bbecd40c32784516d439a1b806fc9c9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c394ef7adfde9903a359e3b066b021d2df01a4ff")]
 [assembly: System.Reflection.AssemblyProductAttribute("Astraia.Lobby")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Astraia.Lobby")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

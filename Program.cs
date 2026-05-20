@@ -39,13 +39,12 @@ internal static class Program
                 File.WriteAllText("setting.json", setting);
             }
 
-            Log.Info("服务器密钥：" + Setting.ServerId);
             Setting = JsonConvert.DeserializeObject<Setting>(File.ReadAllText("setting.json"));
+            Log.Info("服务器密钥：" + Setting.ServerId);
 
-            Log.Info("加载程序集...");
             Assembly.LoadFile(Path.GetFullPath("Astraia.dll"));
+            Log.Info("加载程序集...");
 
-            Log.Info("传输初始化...");
             var port = Setting.ServerPort;
             if (args.Length > 0 && ushort.TryParse(args[0], out var result))
             {
@@ -57,7 +56,8 @@ internal static class Program
             Transport.server.Receive = Common.Receive;
             Transport.server.Disconnect = Common.Disconnect;
             Transport.StartServer();
-
+            Log.Info("传输初始化...");
+            
             Host.Start(port, HttpThread);
             Log.Info("开始进行传输...");
         }
