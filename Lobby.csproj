@@ -9,10 +9,13 @@
         <Nullable>enable</Nullable>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
-
+    <Target Name="CopyToCustomDir" AfterTargets="Build">
+        <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll"
+              DestinationFolder="$(MSBuildProjectDirectory)\Astraia" />
+    </Target>
     <ItemGroup>
       <Reference Include="Astraia">
-        <HintPath>..\Astraia\Astraia.dll</HintPath>
+        <HintPath>Astraia\Astraia.dll</HintPath>
       </Reference>
       <Reference Include="Newtonsoft.Json">
         <HintPath>Astraia\Newtonsoft.Json.dll</HintPath>
