@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+
 namespace Astraia.Net;
 
 public static partial class Extensions

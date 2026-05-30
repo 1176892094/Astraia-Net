@@ -9,8 +9,11 @@
 // # Description: This is an automatically generated comment.
 // *********************************************************************************
 
+using System;
+using System.IO;
 using System.Net;
 using System.Reflection;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace Astraia.Net;
@@ -51,7 +54,7 @@ internal static class Program
                 port = result;
             }
 
-            Transport.port = 7777;
+            Transport.port = port;
             Transport.server.Connect = Common.Connect;
             Transport.server.Receive = Common.Receive;
             Transport.server.Disconnect = Common.Disconnect;
