@@ -1,20 +1,12 @@
 # Astraia-Net
 
-1.文件介绍
+1.使用方法:
 
-(1) 服务器 包含大厅服务器源码
+(1) 将Astraia文件夹上传到服务器
 
-(2) 数据库 包含数据服务器源码
+(2) 点击command.bat文件即可运行
 
-(3) 源程序 可以直接运行的控制台程序
-
-2.使用方法:
-
-Astraia.Lobby.exe 大厅服务器
-
-Astraia.Myqsl.exe 数据服务器
-
-3.主要功能:
+2.主要功能:
 
 (1) 大厅房间信息
 
@@ -22,7 +14,7 @@ Astraia.Myqsl.exe 数据服务器
 
 (3) 游戏房主踢人
 
-4.注意:
+3.注意:
 
 (1) 不支持断线重连
 
@@ -30,6 +22,6 @@ Astraia.Myqsl.exe 数据服务器
 
 (3) 运行数据服务器需要安装 Mysql
 
-5.框架地址:
+4.框架地址:
 
 [https://github.com/1176892094/Astraia](https://github.com/1176892094/Astraia)
