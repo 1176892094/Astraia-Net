@@ -6,7 +6,7 @@ internal class Setting
     /// <summary>
     /// 服务器密钥
     /// </summary>
-    public string ServerId = Guid.NewGuid().ToString();
+    public string ServerId = "5bcff8ae-d6b7-4f06-a9ff-04fce17f2331";
 
     /// <summary>
     /// 服务器端口

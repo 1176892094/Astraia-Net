@@ -51,7 +51,7 @@ internal static class Program
                 port = result;
             }
 
-            Transport.port = port;
+            Transport.port = 7777;
             Transport.server.Connect = Common.Connect;
             Transport.server.Receive = Common.Receive;
             Transport.server.Disconnect = Common.Disconnect;
