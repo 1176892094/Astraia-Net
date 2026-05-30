@@ -58,7 +58,7 @@ internal static class Program
             Transport.StartServer();
             Log.Info("传输初始化...");
             
-            Host.Start(port, HttpThread);
+            Host.Start("http://*:{0}/".Format(port), HttpThread);
             Log.Info("开始进行传输...");
         }
         catch (Exception e)
