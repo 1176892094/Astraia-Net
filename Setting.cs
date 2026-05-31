@@ -21,37 +21,37 @@ internal class Setting
 internal class Room
 {
     /// <summary>
-    /// 房间拥有者
+    /// 房间所有者
     /// </summary>
-    public int clientId;
-
-    /// <summary>
-    /// 是否显示
-    /// </summary>
-    public byte roomMode;
+    public int Host;
 
     /// <summary>
     /// 房间最大人数
     /// </summary>
-    public int maxCount;
+    public int Count;
 
     /// <summary>
-    /// 额外房间数据
+    /// 是否显示
     /// </summary>
-    public string roomData;
+    public int State;
 
     /// <summary>
     /// 房间Id
     /// </summary>
-    public string roomId;
+    public string Id;
 
     /// <summary>
     /// 房间名称
     /// </summary>
-    public string roomName;
+    public string Name;
+
+    /// <summary>
+    /// 额外房间数据
+    /// </summary>
+    public string Data;
 
     /// <summary>
     /// 客户端数量
     /// </summary>
-    public HashSet<int> clients;
+    public List<int> Members;
 }
