@@ -29,6 +29,11 @@ internal class Room
     /// 房间最大人数
     /// </summary>
     public int Count;
+    
+    /// <summary>
+    /// 房间索引
+    /// </summary>
+    public int Index;
 
     /// <summary>
     /// 是否显示

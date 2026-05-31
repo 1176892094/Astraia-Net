@@ -5,6 +5,8 @@ internal static class Common
     private static readonly Dictionary<string, Room> rooms = new Dictionary<string, Room>();
     private static readonly Dictionary<int, Room> clients = new Dictionary<int, Room>();
     private static readonly HashSet<int> connections = new HashSet<int>();
+    private static readonly Queue<int> indices = new Queue<int>();
+    private static int counter;
     private static Transport Transport => Program.Transport;
     public static List<Room> Rooms => rooms.Values.ToList();
 
@@ -52,6 +54,7 @@ internal static class Common
                     Data = reader.ReadString(),
                     Count = reader.ReadInt32(),
                     State = reader.ReadInt32(),
+                    Index = indices.Count > 0 ? indices.Dequeue() : ++counter,
                     Members = new List<int>(),
                 };
 
@@ -61,6 +64,7 @@ internal static class Common
 
                 using var writer = MemoryWriter.Pop();
                 writer.WriteByte((byte)Lobby.创建房间成功);
+                writer.WriteInt32(room.Index);
                 writer.WriteString(room.Id);
                 Transport.SendToClient(clientId, writer);
             }
@@ -164,6 +168,7 @@ internal static class Common
                 room.Members.Clear();
                 rooms.Remove(room.Id);
                 clients.Remove(clientId);
+                indices.Enqueue(room.Index);
                 return;
             }
 
