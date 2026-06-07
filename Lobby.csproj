@@ -6,7 +6,7 @@
         <AssemblyName>Astraia.Lobby</AssemblyName>
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
+        <Nullable>disable</Nullable>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
     <Target Name="CopyToCustomDir" AfterTargets="Build">
@@ -16,9 +16,6 @@
     <ItemGroup>
       <Reference Include="Astraia">
         <HintPath>Astraia\Astraia.dll</HintPath>
-      </Reference>
-      <Reference Include="Newtonsoft.Json">
-        <HintPath>Astraia\Newtonsoft.Json.dll</HintPath>
       </Reference>
     </ItemGroup>
 </Project>

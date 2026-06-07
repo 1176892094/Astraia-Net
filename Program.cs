@@ -9,19 +9,18 @@
 // # Description: This is an automatically generated comment.
 // *********************************************************************************
 
-using System;
-using System.IO;
 using System.Net;
 using System.Reflection;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace Astraia.Net;
 
 internal static class Program
 {
-    public static NetworkTransport Transport;
+    private static readonly JsonSerializerOptions Options = new JsonSerializerOptions { IncludeFields = true };
+    public static KcpTransport Transport;
     public static Setting Setting;
+  
 
     public static void Main(string[] args)
     {
@@ -31,18 +30,19 @@ internal static class Program
     private static async Task StartAsync(string[] args)
     {
         Log.Setup(Info, Warn, Error);
-        Transport = new NetworkTransport();
-        Transport.Awake();
+        Transport = new KcpTransport(true);
         try
         {
             Log.Info("运行服务器...");
             if (!File.Exists("setting.json"))
             {
-                var setting = JsonConvert.SerializeObject(new Setting(), Formatting.Indented);
-                File.WriteAllText("setting.json", setting);
+                var setting = JsonSerializer.Serialize(new Setting(), Options);
+                await File.WriteAllTextAsync("setting.json", setting);
             }
 
-            Setting = JsonConvert.DeserializeObject<Setting>(File.ReadAllText("setting.json"));
+            var readText = await File.ReadAllTextAsync("setting.json");
+            Setting = JsonSerializer.Deserialize<Setting>(readText, Options);
+
             Log.Info("服务器密钥：" + Setting.ServerId);
 
             Assembly.LoadFile(Path.GetFullPath("Astraia.dll"));
@@ -60,7 +60,7 @@ internal static class Program
             Transport.server.Disconnect = Common.Disconnect;
             Transport.StartServer();
             Log.Info("传输初始化...");
-            
+
             Host.Start("http://*:{0}/".Format(port), HttpThread);
             Log.Info("开始进行传输...");
         }
@@ -76,7 +76,8 @@ internal static class Program
         {
             try
             {
-                Transport.Update();
+                Transport.ServerEarlyUpdate();
+                Transport.ServerAfterUpdate();
                 await Task.Delay(10);
             }
             catch (Exception e)
@@ -108,7 +109,7 @@ internal static class Program
     {
         if (request.HttpMethod == "GET" && request.Url.AbsolutePath == "/api/compressed/servers")
         {
-            var readJson = JsonConvert.SerializeObject(Common.Rooms);
+            var readJson = JsonSerializer.Serialize(Common.Rooms, Options);
             readJson = Zip.Compress(readJson);
             var readBytes = Text.GetBytes(readJson);
             response.StatusCode = (int)HttpStatusCode.OK;
