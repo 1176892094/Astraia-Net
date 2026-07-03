@@ -18,9 +18,8 @@ namespace Astraia.Net;
 internal static class Program
 {
     private static readonly JsonSerializerOptions Options = new JsonSerializerOptions { IncludeFields = true };
-    public static KcpTransport Transport;
+    public static Transport Transport;
     public static Setting Setting;
-  
 
     public static void Main(string[] args)
     {
@@ -30,7 +29,8 @@ internal static class Program
     private static async Task StartAsync(string[] args)
     {
         Log.Setup(Info, Warn, Error);
-        Transport = new KcpTransport(true);
+        Transport = new NetworkTransport();
+        ((IModule)Transport).Acquire(true);
         try
         {
             Log.Info("运行服务器...");
@@ -55,9 +55,9 @@ internal static class Program
             }
 
             Transport.port = port;
-            Transport.server.Connect = Common.Connect;
-            Transport.server.Receive = Common.Receive;
-            Transport.server.Disconnect = Common.Disconnect;
+            Transport.sEvent.Connect = Common.Connect;
+            Transport.sEvent.Receive = Common.Receive;
+            Transport.sEvent.Disconnect = Common.Disconnect;
             Transport.StartServer();
             Log.Info("传输初始化...");
 
