@@ -30,7 +30,7 @@ internal static class Program
     {
         Log.Setup(Info, Warn, Error);
         Transport = new NetworkTransport();
-        ((IModule)Transport).Acquire(true);
+        Transport.Register(true);
         try
         {
             Log.Info("运行服务器...");
