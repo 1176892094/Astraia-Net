@@ -110,7 +110,7 @@ internal static class Program
         if (request.HttpMethod == "GET" && request.Url.AbsolutePath == "/api/compressed/servers")
         {
             var readJson = JsonSerializer.Serialize(Common.Rooms, Options);
-            readJson = Zip.Compress(readJson);
+            readJson = Utils.Compress(readJson);
             var readBytes = Text.GetBytes(readJson);
             response.StatusCode = (int)HttpStatusCode.OK;
             response.ContentType = "text/plain; charset=utf-8";
