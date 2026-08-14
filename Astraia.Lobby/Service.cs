@@ -13,19 +13,19 @@ namespace Astraia;
 
 internal static class Service
 {
-    private static readonly Dictionary<string, Room> rooms = new Dictionary<string, Room>();
-    private static readonly Dictionary<int, Room> clients = new Dictionary<int, Room>();
+    private static readonly Dictionary<string, Lobby> rooms = new Dictionary<string, Lobby>();
+    private static readonly Dictionary<int, Lobby> clients = new Dictionary<int, Lobby>();
     private static readonly HashSet<int> connections = new HashSet<int>();
     private static readonly Queue<int> indices = new Queue<int>();
     private static int counter;
     private static Transport Transport => Program.Transport;
-    public static List<Room> Rooms => rooms.Values.ToList();
+    public static List<Lobby> Rooms => rooms.Values.ToList();
 
     public static void Connect(int clientId)
     {
         connections.Add(clientId);
         using var writer = MemoryWriter.Pop();
-        writer.WriteByte((byte)Lobby.身份验证成功);
+        writer.WriteByte((byte)Lobby.Info.身份验证成功);
         Transport.SendToClient(clientId, writer);
     }
 
@@ -34,8 +34,8 @@ internal static class Service
         try
         {
             using var reader = MemoryReader.Pop(segment);
-            var opcode = (Lobby)reader.ReadByte();
-            if (opcode == Lobby.请求进入大厅)
+            var opcode = (Lobby.Info)reader.ReadByte();
+            if (opcode == Lobby.Info.请求进入大厅)
             {
                 if (connections.Remove(clientId))
                 {
@@ -43,12 +43,12 @@ internal static class Service
                     if (serverId == Program.Setting.ServerId)
                     {
                         using var writer = MemoryWriter.Pop();
-                        writer.WriteByte((byte)Lobby.进入大厅成功);
+                        writer.WriteByte((byte)Lobby.Info.进入大厅成功);
                         Transport.SendToClient(clientId, writer);
                     }
                 }
             }
-            else if (opcode == Lobby.请求创建房间)
+            else if (opcode == Lobby.Info.请求创建房间)
             {
                 Disconnect(clientId);
                 string id;
@@ -57,14 +57,14 @@ internal static class Service
                     id = Seed.Next(0xAAAAAA, 0xFFFFFF).ToString("X6");
                 } while (rooms.ContainsKey(id));
 
-                var room = new Room
+                var room = new Lobby
                 {
                     Id = id,
                     Host = clientId,
                     Name = reader.ReadString(),
                     Data = reader.ReadString(),
                     Count = reader.ReadInt32(),
-                    State = reader.ReadInt32(),
+                    Type = (Lobby.Room)reader.ReadInt32(),
                     Index = indices.Count > 0 ? indices.Dequeue() : ++counter,
                     Members = new List<int>(),
                 };
@@ -74,12 +74,12 @@ internal static class Service
                 Log.Info("客户端 {0} 创建房间。 房间名称: {1} 房间数: {2} 连接数: {3}".Format(clientId, room.Name, rooms.Count, clients.Count));
 
                 using var writer = MemoryWriter.Pop();
-                writer.WriteByte((byte)Lobby.创建房间成功);
+                writer.WriteByte((byte)Lobby.Info.创建房间成功);
                 writer.WriteInt32(room.Index);
                 writer.WriteString(room.Id);
                 Transport.SendToClient(clientId, writer);
             }
-            else if (opcode == Lobby.请求加入房间)
+            else if (opcode == Lobby.Info.请求加入房间)
             {
                 Disconnect(clientId);
                 var roomId = reader.ReadString();
@@ -90,7 +90,7 @@ internal static class Service
                     Log.Info("客户端 {0} 加入房间。 房间名称: {1} 房间数: {2} 连接数: {3}".Format(clientId, room.Name, rooms.Count, clients.Count));
 
                     using var writer = MemoryWriter.Pop();
-                    writer.WriteByte((byte)Lobby.加入房间成功);
+                    writer.WriteByte((byte)Lobby.Info.加入房间成功);
                     writer.WriteInt32(clientId);
                     Transport.SendToClient(clientId, writer);
                     Transport.SendToClient(room.Host, writer);
@@ -98,25 +98,26 @@ internal static class Service
                 else
                 {
                     using var writer = MemoryWriter.Pop();
-                    writer.WriteByte((byte)Lobby.离开房间成功);
+                    writer.WriteByte((byte)Lobby.Info.离开房间成功);
                     Transport.SendToClient(clientId, writer);
                 }
             }
-            else if (opcode == Lobby.更新房间数据)
+            else if (opcode == Lobby.Info.更新房间数据)
             {
                 if (clients.TryGetValue(clientId, out var room))
                 {
                     room.Name = reader.ReadString();
                     room.Data = reader.ReadString();
                     room.Count = reader.ReadInt32();
-                    room.State = reader.ReadInt32();
+                    room.Type = (Lobby.Room)reader.ReadInt32();
+                    clients[clientId] = room;
                 }
             }
-            else if (opcode == Lobby.请求离开房间)
+            else if (opcode == Lobby.Info.请求离开房间)
             {
                 Disconnect(clientId);
             }
-            else if (opcode == Lobby.同步网络数据)
+            else if (opcode == Lobby.Info.同步网络数据)
             {
                 var agentId = reader.ReadInt32();
                 var message = reader.ReadArraySegment();
@@ -134,7 +135,7 @@ internal static class Service
                         if (room.Members.Contains(agentId))
                         {
                             using var writer = MemoryWriter.Pop();
-                            writer.WriteByte((byte)Lobby.同步网络数据);
+                            writer.WriteByte((byte)Lobby.Info.同步网络数据);
                             writer.WriteArraySegment(message);
                             Transport.SendToClient(agentId, writer, channel);
                         }
@@ -142,14 +143,14 @@ internal static class Service
                     else
                     {
                         using var writer = MemoryWriter.Pop();
-                        writer.WriteByte((byte)Lobby.同步网络数据);
+                        writer.WriteByte((byte)Lobby.Info.同步网络数据);
                         writer.WriteArraySegment(message);
                         writer.WriteInt32(clientId);
                         Transport.SendToClient(room.Host, writer, channel);
                     }
                 }
             }
-            else if (opcode == Lobby.请求移除玩家)
+            else if (opcode == Lobby.Info.请求移除玩家)
             {
                 var agentId = reader.ReadInt32();
                 Disconnect(agentId);
@@ -169,7 +170,7 @@ internal static class Service
             if (room.Host == clientId) // 主机断开
             {
                 using var writer = MemoryWriter.Pop();
-                writer.WriteByte((byte)Lobby.离开房间成功);
+                writer.WriteByte((byte)Lobby.Info.离开房间成功);
                 foreach (var member in room.Members)
                 {
                     Transport.SendToClient(member, writer);
@@ -186,7 +187,7 @@ internal static class Service
             if (room.Members.Remove(clientId))
             {
                 using var writer = MemoryWriter.Pop();
-                writer.WriteByte((byte)Lobby.断开玩家连接);
+                writer.WriteByte((byte)Lobby.Info.断开玩家连接);
                 writer.WriteInt32(clientId);
                 Transport.SendToClient(room.Host, writer);
                 clients.Remove(clientId);

@@ -88,27 +88,47 @@ internal enum Error : byte
     未知异常 = 7
 }
 
-internal enum Lobby : byte
-{
-    身份验证成功 = 1,
-    请求进入大厅 = 2,
-    进入大厅成功 = 3,
-    请求创建房间 = 4,
-    创建房间成功 = 5,
-    请求加入房间 = 6,
-    加入房间成功 = 7,
-    请求离开房间 = 8,
-    离开房间成功 = 9,
-    请求移除玩家 = 10,
-    断开玩家连接 = 11,
-    更新房间数据 = 12,
-    同步网络数据 = 13,
-}
-
 internal enum Opcode : byte
 {
     握手 = 1,
     心跳 = 2,
     数据 = 3,
     断连 = 4
+}
+
+[Serializable]
+public struct Lobby
+{
+    public int Host;
+    public int Count;
+    public int Index;
+    public Room Type;
+    public string Id;
+    public string Name;
+    public string Data;
+    public List<int> Members;
+
+    public enum Room : byte
+    {
+        公开,
+        私有,
+        锁定,
+    }
+
+    internal enum Info : byte
+    {
+        身份验证成功 = 1,
+        请求进入大厅 = 2,
+        进入大厅成功 = 3,
+        请求创建房间 = 4,
+        创建房间成功 = 5,
+        请求加入房间 = 6,
+        加入房间成功 = 7,
+        请求离开房间 = 8,
+        离开房间成功 = 9,
+        请求移除玩家 = 10,
+        断开玩家连接 = 11,
+        更新房间数据 = 12,
+        同步网络数据 = 13,
+    }
 }
