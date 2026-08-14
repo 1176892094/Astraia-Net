@@ -55,9 +55,9 @@ internal static class Program
             }
 
             Transport.port = port;
-            Transport.sEvent.Connect = Common.Connect;
-            Transport.sEvent.Receive = Common.Receive;
-            Transport.sEvent.Disconnect = Common.Disconnect;
+            Transport.server.onConnect = Common.Connect;
+            Transport.server.onReceive = Common.Receive;
+            Transport.server.onDisconnect = Common.Disconnect;
             Transport.StartServer();
             Log.Info("传输初始化...");
 
