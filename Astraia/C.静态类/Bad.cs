@@ -9,10 +9,13 @@ internal static class Bad
         public int Length;
     }
 
-    private static readonly List<Node> nodes = [new()];
+    private static readonly List<Node> nodes = new();
 
     public static void SetUp(string text)
     {
+        nodes.Clear();
+        nodes.Add(new Node());
+
         var start = 0;
         for (var i = 0; i <= text.Length; i++)
         {
@@ -74,12 +77,13 @@ internal static class Bad
 
                 var fail = nodes[current].Fail;
 
-                while (fail != 0 && !nodes[fail].Next.ContainsKey(c))
+                int next;
+                while (fail != 0 && !nodes[fail].Next.TryGetValue(c, out next))
                 {
                     fail = nodes[fail].Fail;
                 }
 
-                nodes[child].Fail = nodes[fail].Next.GetValueOrDefault(c, 0);
+                nodes[child].Fail = nodes[fail].Next.TryGetValue(c, out next) ? next : 0;
 
                 var failNode = nodes[child].Fail;
 
@@ -140,11 +144,17 @@ internal static class Bad
 
     private static int Move(int state, char c)
     {
-        while (state != 0 && !nodes[state].Next.ContainsKey(c))
+        int next;
+        while (state != 0)
         {
+            if (nodes[state].Next.TryGetValue(c, out next))
+            {
+                return next;
+            }
+
             state = nodes[state].Fail;
         }
 
-        return nodes[state].Next.GetValueOrDefault(c, 0);
+        return nodes[0].Next.TryGetValue(c, out next) ? next : 0;
     }
 }
