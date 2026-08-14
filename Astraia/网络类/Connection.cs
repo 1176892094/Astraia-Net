@@ -59,7 +59,7 @@ public abstract class Connection
         DataInternal(copied, pass);
     }
 
-    public int GetLength(int pass)
+    public static int GetLength(int pass)
     {
         return pass == Pass.KCP ? Const.KCP_LEN : Const.UDP_LEN;
     }
