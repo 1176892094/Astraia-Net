@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astraia", "Astraia\Astraia.csproj", "{1873CF2E-7CF7-4E60-B536-2564C304C904}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astraia.Lobby", "Astraia.Lobby\Astraia.Lobby.csproj", "{B4334D06-8744-4E3C-9583-1828F28DC9A1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1873CF2E-7CF7-4E60-B536-2564C304C904}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1873CF2E-7CF7-4E60-B536-2564C304C904}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1873CF2E-7CF7-4E60-B536-2564C304C904}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1873CF2E-7CF7-4E60-B536-2564C304C904}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4334D06-8744-4E3C-9583-1828F28DC9A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4334D06-8744-4E3C-9583-1828F28DC9A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4334D06-8744-4E3C-9583-1828F28DC9A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4334D06-8744-4E3C-9583-1828F28DC9A1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
