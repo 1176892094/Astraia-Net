@@ -10,15 +10,9 @@ internal static class Bad
     }
 
     private static readonly List<Node> nodes = [new()];
-    private static bool built;
 
     public static void SetUp(string text)
     {
-        if (built)
-        {
-            throw new InvalidOperationException("Already built");
-        }
-
         var start = 0;
         for (var i = 0; i <= text.Length; i++)
         {
@@ -95,8 +89,6 @@ internal static class Bad
                 }
             }
         }
-
-        built = true;
     }
 
     public static string Filter(string text, char mask = '*')

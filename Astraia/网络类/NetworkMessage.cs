@@ -43,7 +43,7 @@ public static class NetworkMessage<T> where T : struct, IMessage
 {
     public static readonly ushort Id = NetworkMessage.Id(typeof(T).FullName);
 
-    public static void Add(Action<T> onReceive)
+    public static void Add<V>(Action<T> onReceive) where V : Connection
     {
         NetworkMessage.SetValueByClient(Id, (client, reader, pass) =>
         {
@@ -62,7 +62,7 @@ public static class NetworkMessage<T> where T : struct, IMessage
         });
     }
 
-    public static void Add(Action<Connection, T> onReceive)
+    public static void Add<V>(Action<V, T> onReceive) where V : Connection
     {
         NetworkMessage.SetValueByServer(Id, (client, reader, pass) =>
         {
@@ -71,7 +71,7 @@ public static class NetworkMessage<T> where T : struct, IMessage
                 var position = reader.position;
                 var message = reader.Invoke<T>();
                 client.OnData(message, reader.position - position);
-                onReceive(client, message);
+                onReceive((V)client, message);
             }
             catch (Exception e)
             {
@@ -81,7 +81,7 @@ public static class NetworkMessage<T> where T : struct, IMessage
         });
     }
 
-    public static void Add(Action<Connection, T, int> onReceive)
+    public static void Add<V>(Action<V, T, int> onReceive) where V : Connection
     {
         NetworkMessage.SetValueByServer(Id, (client, reader, pass) =>
         {
@@ -90,7 +90,7 @@ public static class NetworkMessage<T> where T : struct, IMessage
                 var position = reader.position;
                 var message = reader.Invoke<T>();
                 client.OnData(message, reader.position - position);
-                onReceive(client, message, pass);
+                onReceive((V)client, message, pass);
             }
             catch (Exception e)
             {

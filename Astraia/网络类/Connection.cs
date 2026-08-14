@@ -1,10 +1,12 @@
 namespace Astraia;
 
 [Serializable]
-public abstract record Connection
+public abstract class Connection
 {
     private readonly Dictionary<int, NetworkWriter> writers = new();
     private readonly NetworkReader reader = new();
+
+    public int Count => reader.Count;
 
     internal void Update()
     {
@@ -64,7 +66,7 @@ public abstract record Connection
 
     internal abstract void SendInternal(MemoryWriter writer, int pass);
     internal abstract void DataInternal(NetworkWriter writer, int pass);
-    internal abstract void OnSend(IMessage message, int count);
-    internal abstract void OnData(IMessage message, int count);
+    internal abstract void OnSend<T>(T message, int count) where T : struct, IMessage;
+    internal abstract void OnData<T>(T message, int count) where T : struct, IMessage;
     public abstract void Disconnect();
 }

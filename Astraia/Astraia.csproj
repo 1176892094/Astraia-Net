@@ -15,6 +15,11 @@
         <GenerateDependencyFile>false</GenerateDependencyFile>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0"/>
+        <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
     </ItemGroup>
+    <Target Name="CopyDll" AfterTargets="Build">
+        <Copy
+            SourceFiles="$(TargetPath)"
+            DestinationFolder="/Users/charlotte/Documents/GitHub/Astraia/Assets/Astraia/Plugins/" />
+    </Target>
 </Project>

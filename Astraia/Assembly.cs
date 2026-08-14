@@ -16,6 +16,12 @@ global using System.IO.Compression;
 global using System.Security.Cryptography;
 global using State = Astraia.Async.State;
 
+[assembly: InternalsVisibleTo("Astraia.Net")]
+[assembly: InternalsVisibleTo("Astraia.Run")]
+[assembly: InternalsVisibleTo("Astraia.Lobby")]
+[assembly: InternalsVisibleTo("Astraia.Editor")]
+[assembly: InternalsVisibleTo("Unity.Astraia.CodeGen")]
+
 namespace System.Runtime.CompilerServices;
 
 internal static class IsExternalInit;
