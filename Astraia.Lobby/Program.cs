@@ -1,10 +1,6 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using System;
-using System.Net;
+﻿using System.Net;
 using System.Reflection;
 using System.Text.Json;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace Astraia;
 
@@ -100,7 +96,7 @@ internal static class Program
 
     private static async Task HttpThread(HttpListenerRequest request, HttpListenerResponse response)
     {
-        if (request.HttpMethod == "GET" && request.Url.AbsolutePath == "/api/compressed/servers")
+        if (request.HttpMethod == "GET" && request.Url!.AbsolutePath == "/api/compressed/servers")
         {
             var readJson = JsonSerializer.Serialize(Service.Rooms, Options);
             readJson = Zip.Compress(readJson);
