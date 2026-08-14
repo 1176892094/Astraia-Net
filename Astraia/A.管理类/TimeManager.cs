@@ -121,3 +121,10 @@ public static class TimeManager
         return item;
     }
 }
+
+internal interface IAsync
+{
+    int Id { get; set; }
+    int Index { get; set; }
+    void Update(float elapseTime);
+}

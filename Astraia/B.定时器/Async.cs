@@ -92,10 +92,3 @@ public abstract class Async : IAsync, INotifyCompletion
         Failure
     }
 }
-
-internal interface IAsync
-{
-    int Id { get; set; }
-    int Index { get; set; }
-    void Update(float elapseTime);
-}
