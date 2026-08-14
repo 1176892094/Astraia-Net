@@ -13,10 +13,11 @@ namespace Astraia;
 
 internal unsafe delegate void SendDelegate(byte* bytes, int count);
 
-internal static class Pass
+public static class Pass
 {
     public const byte KCP = 1 << 0;
     public const byte UDP = 1 << 1;
+    public const byte ANY = 1 << 2;
 }
 
 internal static class Const
