@@ -1,17 +1,11 @@
 namespace Astraia;
 
-internal sealed class KcpClient(byte[] buffer)
+internal sealed class KcpClient(KcpClientEvent onEvent, byte[] buffer)
 {
     private State state = State.Failure;
     private Socket socket;
     private KcpPeer kcpPeer;
     private EndPoint endPoint;
-
-    public Action<int> onConnect;
-    public Action<int> onDisconnect;
-    public Action<Error, string> onError;
-    public Action<ArraySegment<byte>> onSend;
-    public Action<ArraySegment<byte>, int> onReceive;
 
     public void Connect(string address, ushort port)
     {
@@ -38,8 +32,8 @@ internal sealed class KcpClient(byte[] buffer)
         }
         catch (SocketException e)
         {
-            onError(Error.解析失败, $"无法解析主机地址: {address}\n{e}");
-            onDisconnect(0);
+            onEvent.onError(Error.解析失败, $"无法解析主机地址: {address}\n{e}");
+            onEvent.onDisconnect(0);
         }
     }
 
@@ -48,7 +42,7 @@ internal sealed class KcpClient(byte[] buffer)
         if (state != State.Failure)
         {
             kcpPeer.SendData(segment, pass);
-            onSend?.Invoke(segment);
+            onEvent.onSend?.Invoke(segment);
         }
     }
 
@@ -90,12 +84,13 @@ internal sealed class KcpClient(byte[] buffer)
     {
         if (kcpPeer == null)
         {
-            kcpPeer = new KcpPeer(nameof(KcpClient));
-            kcpPeer.onConnect = OnConnect;
-            kcpPeer.onDisconnect = OnDisconnect;
-            kcpPeer.onError = OnError;
-            kcpPeer.onReceive = OnReceive;
-            kcpPeer.onSend = OnSend;
+            var kcpData = new KcpClientEvent();
+            kcpPeer = new KcpPeer(kcpData, nameof(KcpClient));
+            kcpData.onConnect = OnConnect;
+            kcpData.onDisconnect = OnDisconnect;
+            kcpData.onError = OnError;
+            kcpData.onReceive = OnReceive;
+            kcpData.onSend = OnSend;
         }
 
         kcpPeer.Rebuild();
@@ -105,7 +100,7 @@ internal sealed class KcpClient(byte[] buffer)
     {
         Log.Info($"客户端 {serverId} 连接到服务器。");
         state = State.Success;
-        onConnect(serverId);
+        onEvent.onConnect(serverId);
     }
 
     private void OnDisconnect(int serverId)
@@ -115,17 +110,17 @@ internal sealed class KcpClient(byte[] buffer)
         socket.Close();
         socket = null;
         endPoint = null;
-        onDisconnect(serverId);
+        onEvent.onDisconnect(serverId);
     }
 
     private void OnError(Error error, string message)
     {
-        onError(error, message);
+        onEvent.onError(error, message);
     }
 
     private void OnReceive(ArraySegment<byte> segment, int pass)
     {
-        onReceive(segment, pass);
+        onEvent.onReceive(segment, pass);
     }
 
     private void OnSend(ArraySegment<byte> segment)

@@ -11,7 +11,7 @@
 
 namespace Astraia;
 
-public static partial class Extensions
+internal static partial class Extensions
 {
     public static byte ReadByte(this MemoryReader reader)
     {

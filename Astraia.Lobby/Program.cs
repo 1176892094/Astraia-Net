@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Reflection;
 using System.Text.Json;
+using System.Xml.Serialization;
 
 namespace Astraia;
 
@@ -19,7 +20,7 @@ internal static class Program
     {
         Log.Setup(Info, Warn, Error);
         Transport = new NetworkTransport();
-        Transport.Register(true);
+        Transport.Start(true);
         try
         {
             Log.Info("运行服务器...");
@@ -98,12 +99,17 @@ internal static class Program
     {
         if (request.HttpMethod == "GET" && request.Url!.AbsolutePath == "/api/compressed/servers")
         {
-            var readJson = JsonSerializer.Serialize(Service.Rooms, Options);
-            readJson = Zip.Compress(readJson);
-            var readBytes = Text.GetBytes(readJson);
+            var serializer = new XmlSerializer(Service.Rooms.GetType());
+            await using var writer = new StringWriter();
+            serializer.Serialize(writer, Service.Rooms);
+
+            var xml = Zip.Compress(writer.ToString());
+            var readBytes = Text.GetBytes(xml);
+
             response.StatusCode = (int)HttpStatusCode.OK;
-            response.ContentType = "text/plain; charset=utf-8";
+            response.ContentType = "application/xml; charset=utf-8";
             response.ContentLength64 = readBytes.Length;
+
             await response.OutputStream.WriteAsync(readBytes, 0, readBytes.Length);
         }
     }

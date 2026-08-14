@@ -1,18 +1,12 @@
 namespace Astraia;
 
 [Serializable]
-internal sealed class KcpServer(byte[] buffer)
+internal sealed class KcpServer(KcpServerEvent onEvent, byte[] buffer)
 {
     private Dictionary<int, KcpClient> clients = new();
     private Socket socket;
     private List<int> removes = new();
     private EndPoint endPoint = new IPEndPoint(IPAddress.IPv6Any, 0);
-
-    public Action<int> onConnect;
-    public Action<int> onDisconnect;
-    public Action<int, Error, string> onError;
-    public Action<int, ArraySegment<byte>> onSend;
-    public Action<int, ArraySegment<byte>, int> onReceive;
 
     public void Connect(ushort port)
     {
@@ -49,7 +43,7 @@ internal sealed class KcpServer(byte[] buffer)
         if (clients.TryGetValue(id, out var client))
         {
             client.kcpPeer.SendData(segment, pass);
-            onSend?.Invoke(id, segment);
+            onEvent.onSend?.Invoke(id, segment);
         }
     }
 
@@ -90,12 +84,13 @@ internal sealed class KcpServer(byte[] buffer)
 
     private KcpPeer Register(int id)
     {
-        var kcpPeer = new KcpPeer(nameof(KcpServer));
-        kcpPeer.onConnect = OnConnect;
-        kcpPeer.onDisconnect = OnDisconnect;
-        kcpPeer.onError = OnError;
-        kcpPeer.onReceive = OnReceive;
-        kcpPeer.onSend = OnSend;
+        var kcpData = new KcpClientEvent();
+        var kcpPeer = new KcpPeer(kcpData, nameof(KcpServer));
+        kcpData.onConnect = OnConnect;
+        kcpData.onDisconnect = OnDisconnect;
+        kcpData.onError = OnError;
+        kcpData.onReceive = OnReceive;
+        kcpData.onSend = OnSend;
         kcpPeer.Rebuild();
         return kcpPeer;
 
@@ -104,24 +99,24 @@ internal sealed class KcpServer(byte[] buffer)
             Log.Info($"客户端 {id} 连接到服务器。");
             clients.Add(id, new KcpClient(kcpPeer, endPoint));
             kcpPeer.Handshake(id);
-            onConnect(id);
+            onEvent.onConnect(id);
         }
 
         void OnDisconnect(int serverId)
         {
             Log.Info($"客户端 {id} 从服务器断开。");
             removes.Add(id);
-            onDisconnect(id);
+            onEvent.onDisconnect(id);
         }
 
         void OnError(Error error, string reason)
         {
-            onError?.Invoke(id, error, reason);
+            onEvent.onError?.Invoke(id, error, reason);
         }
 
         void OnReceive(ArraySegment<byte> message, int pass)
         {
-            onReceive(id, message, pass);
+            onEvent.onReceive(id, message, pass);
         }
 
         void OnSend(ArraySegment<byte> segment)

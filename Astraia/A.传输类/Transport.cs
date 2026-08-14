@@ -6,10 +6,10 @@ internal abstract class Transport
     public string address = "localhost";
     public ushort port = 20974;
 
-    public KcpClient client;
-    public KcpServer server;
+    public KcpClientEvent client = new KcpClientEvent();
+    public KcpServerEvent server = new KcpServerEvent();
 
-    public abstract void Register(bool isRemote);
+    public abstract void Start(bool isRemote);
     public abstract void SendToClient(int clientId, ArraySegment<byte> segment, int pass = Pass.KCP);
     public abstract void SendToServer(ArraySegment<byte> segment, int pass = Pass.KCP);
     public abstract void StartServer();
@@ -26,17 +26,20 @@ internal abstract class Transport
 [Serializable]
 internal sealed class NetworkTransport : Transport
 {
-    public override void Register(bool isRemote)
+    private new KcpClient client;
+    private new KcpServer server;
+
+    public override void Start(bool isRemote)
     {
-        client = new KcpClient(new byte[Const.MTU_DEF]);
-        server = new KcpServer(new byte[Const.MTU_DEF]);
+        client = new KcpClient(base.client, new byte[Const.MTU_DEF]);
+        server = new KcpServer(base.server, new byte[Const.MTU_DEF]);
         if (isRemote)
         {
-            server.onError = OnServerError;
+            base.server.onError = OnServerError;
         }
         else
         {
-            client.onError = OnClientError;
+            base.client.onError = OnClientError;
         }
     }
 

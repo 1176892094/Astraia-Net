@@ -18,16 +18,28 @@ public sealed class ExportAttribute : Attribute;
 public sealed class PrimaryAttribute : Attribute;
 
 [AttributeUsage(AttributeTargets.Field)]
-public sealed class SyncVarAttribute(string func = null) : Attribute;
+public sealed class SyncVarAttribute(string func = null) : Attribute
+{
+    public readonly string func = func;
+}
 
 [AttributeUsage(AttributeTargets.Method)]
-public sealed class ClientRpcAttribute(int pass = Pass.KCP) : Attribute;
+public sealed class ClientRpcAttribute(int pass = Pass.KCP) : Attribute
+{
+    public readonly int pass = pass;
+}
 
 [AttributeUsage(AttributeTargets.Method)]
-public sealed class ServerRpcAttribute(int pass = Pass.KCP) : Attribute;
+public sealed class ServerRpcAttribute(int pass = Pass.KCP) : Attribute
+{
+    public readonly int pass = pass;
+}
 
 [AttributeUsage(AttributeTargets.Method)]
-public sealed class TargetRpcAttribute(int pass = Pass.KCP) : Attribute;
+public sealed class TargetRpcAttribute(int pass = Pass.KCP) : Attribute
+{
+    public readonly int pass = pass;
+}
 
 [AttributeUsage(AttributeTargets.Class)]
 public sealed class UIPathAttribute(string asset) : Attribute
@@ -43,7 +55,7 @@ public sealed class UIMaskAttribute(int layer, int group = 0) : Attribute
 }
 
 [AttributeUsage(AttributeTargets.Class)]
-public class UIRectAttribute(int col, int row, float width, float height, float offset, bool rotation = true, bool selected = false) : Attribute
+public sealed class UIRectAttribute(int col, int row, float width, float height, float offset, bool rotation = true, bool selected = false) : Attribute
 {
     public readonly int row = row;
     public readonly int col = col;
