@@ -11,7 +11,7 @@
 
 namespace Astraia;
 
-internal static partial class Extensions
+internal static partial class StreamExtensions
 {
     public static void WriteByte(this MemoryWriter writer, byte value)
     {

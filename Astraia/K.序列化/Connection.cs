@@ -5,7 +5,7 @@ public abstract class Connection
 {
     private readonly Dictionary<int, NetworkWriter> writers = new();
     private readonly NetworkReader reader = new();
-
+    
     public int Count => reader.Count;
 
     internal void Update()

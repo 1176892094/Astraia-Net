@@ -61,29 +61,32 @@ public static class Nodes
         return new Failure(node.Nodes.Select(i => i.Build(func)).First());
     }
 
-    public static int Load(string reason, List<Node> nodes)
+    public static Node Load(string reason, List<Node> nodes)
     {
         if (string.IsNullOrEmpty(reason))
         {
-            return -1;
+            return default;
         }
 
-        var index = nodes.Count;
-        var bracket = FindFirstBracket(reason);
-        if (bracket < 0)
+        var count = nodes.Count;
+        var index = FindFirstBracket(reason);
+        if (index < 0)
         {
-            nodes.Add(new Node(reason, index));
+            var node = new Node(reason, count);
+            nodes.Add(node);
+            return node;
         }
         else
         {
-            nodes.Add(new Node(reason.Substring(0, bracket), index));
-            foreach (var child in LoadNode(Checked(reason, bracket)))
+            var node = new Node(reason.Substring(0, index), count);
+            nodes.Add(node);
+            foreach (var child in LoadNode(Checked(reason, index)))
             {
-                nodes[index].Nodes.Add(nodes[Load(child, nodes)]);
+                node.Nodes.Add(Load(child, nodes));
             }
-        }
 
-        return index;
+            return node;
+        }
     }
 
     private static string Checked(string reason, int index)

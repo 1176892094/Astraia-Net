@@ -114,3 +114,8 @@ internal enum Opcode : byte
     断连 = 4
 }
 
+internal enum SyncMode : byte
+{
+    服务器,
+    客户端
+}

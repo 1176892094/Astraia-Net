@@ -11,7 +11,7 @@
 
 namespace Astraia;
 
-internal unsafe class KcpModule
+internal unsafe class KcpData
 {
     private static readonly Dictionary<int, SendDelegate> methods = new Dictionary<int, SendDelegate>();
     private int key;
@@ -21,9 +21,9 @@ internal unsafe class KcpModule
     public uint Death => kcp->dead_link;
     public uint Count => kcp->nrcv_buf + kcp->nrcv_que + kcp->nsnd_buf + kcp->nsnd_que;
 
-    public static void Build(KcpModule module, SendDelegate onSend)
+    public static void Build(KcpData kcpData, SendDelegate onSend)
     {
-        module.Release();
+        kcpData.Release();
 
         int key;
         do
@@ -31,15 +31,16 @@ internal unsafe class KcpModule
             key = Seed.Next();
         } while (methods.ContainsKey(key));
 
-        module.key = key;
-        module.kcp = Kcp.ikcp_create(0, (void*)key);
-
+        methods.Remove(key);
+        kcpData.key = key;
+        kcpData.kcp = Kcp.ikcp_create(0, (void*)key);
         methods.Add(key, onSend);
-        module.kcp->dead_link = Const.DEAD_LINK;
-        Kcp.ikcp_setmtu(module.kcp, Const.MTU_DEF - Const.HEAD_SIZE);
-        Kcp.ikcp_nodelay(module.kcp, 1, Const.STEP_TIME, Const.FAST_SEND, 1);
-        Kcp.ikcp_wndsize(module.kcp, Const.SED_WIN, Const.REV_WIN);
-        Kcp.ikcp_setoutput(module.kcp, &Output);
+
+        kcpData.kcp->dead_link = Const.DEAD_LINK;
+        Kcp.ikcp_setmtu(kcpData.kcp, Const.MTU_DEF - Const.HEAD_SIZE);
+        Kcp.ikcp_nodelay(kcpData.kcp, 1, Const.STEP_TIME, Const.FAST_SEND, 1);
+        Kcp.ikcp_wndsize(kcpData.kcp, Const.SED_WIN, Const.REV_WIN);
+        Kcp.ikcp_setoutput(kcpData.kcp, &Output);
     }
 
     private static int Output(byte* bytes, int count, IKCPCB* kcp, void* user)
@@ -101,7 +102,7 @@ internal unsafe class KcpModule
         }
     }
 
-    ~KcpModule()
+    ~KcpData()
     {
         Release();
     }

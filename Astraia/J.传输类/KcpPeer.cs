@@ -1,12 +1,12 @@
 namespace Astraia;
 
-internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
+internal sealed class KcpPeer(KcpClientEvent Event, string userName)
 {
     private readonly byte[] rawSendBuffer = new byte[Const.MTU_DEF];
     private readonly byte[] kcpSendBuffer = new byte[Const.KCP_LEN + 1];
     private readonly byte[] kcpDataBuffer = new byte[Const.KCP_LEN + 1];
+    private readonly KcpData kcpData = new();
     private readonly Stopwatch watch = new();
-    private readonly KcpModule module = new();
 
     private State state;
     private int pingTime;
@@ -19,7 +19,7 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
         pingTime = 0;
         nextTime = 0;
         waitTime = Const.WAIT_TIME;
-        KcpModule.Build(module, SendReliable);
+        KcpData.Build(kcpData, SendReliable);
         state = State.Running;
         watch.Restart();
     }
@@ -33,7 +33,7 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
             Buffer.MemoryCopy(bytes, dest, count, count);
         }
 
-        onEvent.onSend(new ArraySegment<byte>(rawSendBuffer, 0, Const.HEAD_SIZE + count));
+        Event.onSend(new ArraySegment<byte>(rawSendBuffer, 0, Const.HEAD_SIZE + count));
     }
 
     public void Handshake(int userData)
@@ -46,7 +46,7 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
     {
         segment = default;
         message = Opcode.断连;
-        var count = module.PeekSize();
+        var count = kcpData.PeekSize();
         if (count <= 0)
         {
             return false;
@@ -54,14 +54,14 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
 
         if (count > kcpDataBuffer.Length)
         {
-            onEvent.onError(Error.无效接收, $"{userName}接收网络消息过大。消息大小: {kcpDataBuffer.Length} < {count}。");
+            Event.onError(Error.无效接收, $"{userName}接收网络消息过大。消息大小: {kcpDataBuffer.Length} < {count}。");
             Disconnect();
             return false;
         }
 
-        if (module.Receive(kcpDataBuffer, count) < 0)
+        if (kcpData.Receive(kcpDataBuffer, count) < 0)
         {
-            onEvent.onError(Error.无效接收, $"{userName}接收网络消息失败。");
+            Event.onError(Error.无效接收, $"{userName}接收网络消息失败。");
             Disconnect();
             return false;
         }
@@ -90,7 +90,7 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
         var message = new ArraySegment<byte>(segment.Array, segment.Offset + Const.HEAD_SIZE, segment.Count - Const.HEAD_SIZE);
         if (pass == Pass.KCP)
         {
-            if (module.Input(message.Array, message.Offset, message.Count) != 0)
+            if (kcpData.Input(message.Array, message.Offset, message.Count) != 0)
             {
                 Log.Warn($"{userName}发送可靠消息失败。消息大小: {message.Count - 1}");
             }
@@ -99,7 +99,7 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
         {
             if (state == State.Success)
             {
-                onEvent.onReceive(message, Pass.UDP);
+                Event.onReceive(message, Pass.UDP);
                 nextTime = (int)watch.ElapsedMilliseconds;
             }
         }
@@ -109,7 +109,7 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
     {
         if (segment.Count > Const.KCP_LEN)
         {
-            onEvent.onError(Error.无效发送, $"{userName}发送网络消息过大。消息大小: {segment.Count} < {Const.KCP_LEN}");
+            Event.onError(Error.无效发送, $"{userName}发送网络消息过大。消息大小: {segment.Count} < {Const.KCP_LEN}");
             return;
         }
 
@@ -119,9 +119,9 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
             Buffer.BlockCopy(segment.Array!, segment.Offset, kcpSendBuffer, 1, segment.Count);
         }
 
-        if (module.Send(kcpSendBuffer, 0, segment.Count + 1) < 0)
+        if (kcpData.Send(kcpSendBuffer, 0, segment.Count + 1) < 0)
         {
-            onEvent.onError(Error.无效发送, $"{userName}发送网络消息失败。消息大小: {segment.Count}。");
+            Event.onError(Error.无效发送, $"{userName}发送网络消息失败。消息大小: {segment.Count}。");
         }
     }
 
@@ -129,7 +129,7 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
     {
         if (segment.Count > Const.UDP_LEN)
         {
-            onEvent.onError(Error.无效发送, $"{userName}发送网络消息过大。消息大小: {segment.Count} < {Const.UDP_LEN}");
+            Event.onError(Error.无效发送, $"{userName}发送网络消息过大。消息大小: {segment.Count} < {Const.UDP_LEN}");
             return;
         }
 
@@ -140,14 +140,14 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
             Buffer.BlockCopy(segment.Array!, segment.Offset, rawSendBuffer, Const.HEAD_SIZE, segment.Count);
         }
 
-        onEvent.onSend(new ArraySegment<byte>(rawSendBuffer, 0, segment.Count + Const.HEAD_SIZE));
+        Event.onSend(new ArraySegment<byte>(rawSendBuffer, 0, segment.Count + Const.HEAD_SIZE));
     }
 
     public void SendData(ArraySegment<byte> segment, int pass)
     {
         if (segment.Count == 0)
         {
-            onEvent.onError(Error.无效发送, $"{userName}尝试发送空消息。");
+            Event.onError(Error.无效发送, $"{userName}尝试发送空消息。");
             Disconnect();
             return;
         }
@@ -173,12 +173,12 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
             }
 
             SendReliable(Opcode.断连);
-            module.Flush();
+            kcpData.Flush();
         }
         finally
         {
             state = State.Failure;
-            onEvent.onDisconnect(userData);
+            Event.onDisconnect(userData);
         }
     }
 
@@ -187,14 +187,14 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
         var sinceTime = (int)watch.ElapsedMilliseconds;
         if (sinceTime >= nextTime + waitTime)
         {
-            onEvent.onError(Error.连接超时, $"{userName}在{waitTime / 1000}秒内没有收到任何消息后的连接超时！");
+            Event.onError(Error.连接超时, $"{userName}在{waitTime / 1000}秒内没有收到任何消息后的连接超时！");
             Disconnect();
             return;
         }
 
-        if (module.State == unchecked((uint)-1))
+        if (kcpData.State == unchecked((uint)-1))
         {
-            onEvent.onError(Error.连接超时, $"{userName}网络消息被重传了{module.Death}次而没有得到确认！");
+            Event.onError(Error.连接超时, $"{userName}网络消息被重传了{kcpData.Death}次而没有得到确认！");
             Disconnect();
             return;
         }
@@ -205,9 +205,9 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
             pingTime = sinceTime;
         }
 
-        if (module.Count >= 10000)
+        if (kcpData.Count >= 10000)
         {
-            onEvent.onError(Error.网络拥塞, $"{userName}断开连接，因为它处理数据的速度不够快！");
+            Event.onError(Error.网络拥塞, $"{userName}断开连接，因为它处理数据的速度不够快！");
             Disconnect();
         }
     }
@@ -220,16 +220,16 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
             switch (message)
             {
                 case Opcode.握手 when segment.Count != 4:
-                    onEvent.onError(Error.无效接收, $"{userName}接收无效的网络消息。消息类型: {message}");
+                    Event.onError(Error.无效接收, $"{userName}接收无效的网络消息。消息类型: {message}");
                     Disconnect();
                     return;
                 case Opcode.握手:
                     state = State.Success;
                     userData = Common.Decode(segment.Array, segment.Offset);
-                    onEvent.onConnect(userData);
+                    Event.onConnect(userData);
                     break;
                 case Opcode.数据:
-                    onEvent.onError(Error.无效接收, $"{userName}接收无效的网络消息。消息类型: {message}");
+                    Event.onError(Error.无效接收, $"{userName}接收无效的网络消息。消息类型: {message}");
                     Disconnect();
                     break;
                 case Opcode.断连:
@@ -247,15 +247,15 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
             switch (message)
             {
                 case Opcode.握手:
-                    onEvent.onError(Error.无效接收, $"{userName}接收无效的网络消息。消息类型: {message}");
+                    Event.onError(Error.无效接收, $"{userName}接收无效的网络消息。消息类型: {message}");
                     Disconnect();
                     break;
                 case Opcode.数据 when segment.Count == 0:
-                    onEvent.onError(Error.无效接收, $"{userName}接收无效的网络消息。消息类型: {message}");
+                    Event.onError(Error.无效接收, $"{userName}接收无效的网络消息。消息类型: {message}");
                     Disconnect();
                     break;
                 case Opcode.数据:
-                    onEvent.onReceive(segment, Pass.KCP);
+                    Event.onReceive(segment, Pass.KCP);
                     break;
                 case Opcode.断连:
                     Disconnect();
@@ -280,17 +280,17 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
         }
         catch (SocketException e)
         {
-            onEvent.onError(Error.连接关闭, $"{userName}网络发生异常，断开连接。\n{e}");
+            Event.onError(Error.连接关闭, $"{userName}网络发生异常，断开连接。\n{e}");
             Disconnect();
         }
         catch (ObjectDisposedException e)
         {
-            onEvent.onError(Error.连接关闭, $"{userName}网络发生异常，断开连接。\n{e}");
+            Event.onError(Error.连接关闭, $"{userName}网络发生异常，断开连接。\n{e}");
             Disconnect();
         }
         catch (Exception e)
         {
-            onEvent.onError(Error.未知异常, $"{userName}网络发生异常，断开连接。\n{e}");
+            Event.onError(Error.未知异常, $"{userName}网络发生异常，断开连接。\n{e}");
             Disconnect();
         }
     }
@@ -301,22 +301,22 @@ internal sealed class KcpPeer(KcpClientEvent onEvent, string userName)
         {
             if (state != State.Failure)
             {
-                module.Update((uint)watch.ElapsedMilliseconds);
+                kcpData.Update((uint)watch.ElapsedMilliseconds);
             }
         }
         catch (SocketException e)
         {
-            onEvent.onError(Error.连接关闭, $"{userName}网络发生异常，断开连接。\n{e}");
+            Event.onError(Error.连接关闭, $"{userName}网络发生异常，断开连接。\n{e}");
             Disconnect();
         }
         catch (ObjectDisposedException e)
         {
-            onEvent.onError(Error.连接关闭, $"{userName}网络发生异常，断开连接。\n{e}");
+            Event.onError(Error.连接关闭, $"{userName}网络发生异常，断开连接。\n{e}");
             Disconnect();
         }
         catch (Exception e)
         {
-            onEvent.onError(Error.未知异常, $"{userName}网络发生异常，断开连接。\n{e}");
+            Event.onError(Error.未知异常, $"{userName}网络发生异常，断开连接。\n{e}");
             Disconnect();
         }
     }

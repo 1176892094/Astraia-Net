@@ -11,12 +11,6 @@
 
 namespace Astraia;
 
-public record struct LobbyDisconnect : IEvent;
-
-public record struct LobbyUpdate(List<Lobby> rooms) : IEvent;
-
-public record struct LobbyCreate(int index, string address) : IEvent;
-
 [Serializable]
 internal sealed class NetworkAuthority : Transport
 {
@@ -25,17 +19,17 @@ internal sealed class NetworkAuthority : Transport
     private readonly Dictionary<int, int> clients = new Dictionary<int, int>();
     private readonly Dictionary<int, int> players = new Dictionary<int, int>();
 
-    [NonSerialized] public State state = State.Failure;
-    [NonSerialized] public int serverId;
-    [NonSerialized] public int objectId;
-    [NonSerialized] public bool isClient;
-    [NonSerialized] public bool isServer;
-    [NonSerialized] public bool isRemote;
-    [NonSerialized] public int maxPlayer;
-    [NonSerialized] public string roomName;
-    [NonSerialized] public string roomData;
-    [NonSerialized] public string roomGuid;
-    [NonSerialized] public Lobby.Room roomMode;
+    internal State state = State.Failure;
+    internal int serverId;
+    internal int objectId;
+    internal int maxPlayer;
+    internal bool isClient;
+    internal bool isServer;
+    internal bool isRemote;
+    internal string roomName;
+    internal string roomData;
+    internal string roomGuid;
+    internal Lobby.Room roomMode;
 
     public bool isRunner => isServer || isClient;
     public bool isActive => state == State.Success;

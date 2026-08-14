@@ -1,7 +1,7 @@
 namespace Astraia;
 
 [Serializable]
-internal sealed class KcpServer(KcpServerEvent onEvent, byte[] buffer)
+internal sealed class KcpServer(KcpServerEvent Event, byte[] buffer)
 {
     private Dictionary<int, KcpClient> clients = new();
     private Socket socket;
@@ -43,7 +43,7 @@ internal sealed class KcpServer(KcpServerEvent onEvent, byte[] buffer)
         if (clients.TryGetValue(id, out var client))
         {
             client.kcpPeer.SendData(segment, pass);
-            onEvent.onSend?.Invoke(id, segment);
+            Event.onSend?.Invoke(id, segment);
         }
     }
 
@@ -99,24 +99,24 @@ internal sealed class KcpServer(KcpServerEvent onEvent, byte[] buffer)
             Log.Info($"客户端 {id} 连接到服务器。");
             clients.Add(id, new KcpClient(kcpPeer, endPoint));
             kcpPeer.Handshake(id);
-            onEvent.onConnect(id);
+            Event.onConnect(id);
         }
 
         void OnDisconnect(int serverId)
         {
             Log.Info($"客户端 {id} 从服务器断开。");
             removes.Add(id);
-            onEvent.onDisconnect(id);
+            Event.onDisconnect(id);
         }
 
         void OnError(Error error, string reason)
         {
-            onEvent.onError?.Invoke(id, error, reason);
+            Event.onError?.Invoke(id, error, reason);
         }
 
         void OnReceive(ArraySegment<byte> message, int pass)
         {
-            onEvent.onReceive(id, message, pass);
+            Event.onReceive(id, message, pass);
         }
 
         void OnSend(ArraySegment<byte> segment)

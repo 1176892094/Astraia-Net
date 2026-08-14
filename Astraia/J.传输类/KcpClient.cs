@@ -1,6 +1,6 @@
 namespace Astraia;
 
-internal sealed class KcpClient(KcpClientEvent onEvent, byte[] buffer)
+internal sealed class KcpClient(KcpClientEvent Event, byte[] buffer)
 {
     private State state = State.Failure;
     private Socket socket;
@@ -32,8 +32,8 @@ internal sealed class KcpClient(KcpClientEvent onEvent, byte[] buffer)
         }
         catch (SocketException e)
         {
-            onEvent.onError(Error.解析失败, $"无法解析主机地址: {address}\n{e}");
-            onEvent.onDisconnect(0);
+            Event.onError(Error.解析失败, $"无法解析主机地址: {address}\n{e}");
+            Event.onDisconnect(0);
         }
     }
 
@@ -42,7 +42,7 @@ internal sealed class KcpClient(KcpClientEvent onEvent, byte[] buffer)
         if (state != State.Failure)
         {
             kcpPeer.SendData(segment, pass);
-            onEvent.onSend?.Invoke(segment);
+            Event.onSend?.Invoke(segment);
         }
     }
 
@@ -100,7 +100,7 @@ internal sealed class KcpClient(KcpClientEvent onEvent, byte[] buffer)
     {
         Log.Info($"客户端 {serverId} 连接到服务器。");
         state = State.Success;
-        onEvent.onConnect(serverId);
+        Event.onConnect(serverId);
     }
 
     private void OnDisconnect(int serverId)
@@ -110,17 +110,17 @@ internal sealed class KcpClient(KcpClientEvent onEvent, byte[] buffer)
         socket.Close();
         socket = null;
         endPoint = null;
-        onEvent.onDisconnect(serverId);
+        Event.onDisconnect(serverId);
     }
 
     private void OnError(Error error, string message)
     {
-        onEvent.onError(error, message);
+        Event.onError(error, message);
     }
 
     private void OnReceive(ArraySegment<byte> segment, int pass)
     {
-        onEvent.onReceive(segment, pass);
+        Event.onReceive(segment, pass);
     }
 
     private void OnSend(ArraySegment<byte> segment)
