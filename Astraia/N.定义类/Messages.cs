@@ -23,9 +23,9 @@ public readonly record struct ServerDisconnect(int id) : IEvent;
 
 public readonly record struct ServerReady(int id) : IEvent;
 
-public readonly record struct ClientConnect : IEvent;
+public readonly record struct ClientConnect(int id)  : IEvent;
 
-public readonly record struct ClientDisconnect : IEvent;
+public readonly record struct ClientDisconnect(int id)  : IEvent;
 
 public readonly record struct ServerLoadScene(string sceneName) : IEvent;
 

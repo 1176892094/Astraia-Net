@@ -165,13 +165,13 @@ internal sealed class KcpPeer(KcpClientEvent Event, string userName)
 
     public void Disconnect()
     {
+        if (state == State.Failure)
+        {
+            return;
+        }
+
         try
         {
-            if (state == State.Failure)
-            {
-                return;
-            }
-
             SendReliable(Opcode.断连);
             kcpData.Flush();
         }
