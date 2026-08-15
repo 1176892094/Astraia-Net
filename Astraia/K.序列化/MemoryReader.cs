@@ -27,7 +27,12 @@ public class MemoryReader : IDisposable
     public unsafe T Read<T>() where T : unmanaged
     {
         var count = sizeof(T);
-        var value = Unsafe.ReadUnaligned<T>(ref buffer.Array![buffer.Offset + position]);
+        T value;
+        fixed (byte* ptr = &buffer.Array![buffer.Offset + position])
+        {
+            value = *(T*)ptr;
+        }
+
         position += count;
         return value;
     }

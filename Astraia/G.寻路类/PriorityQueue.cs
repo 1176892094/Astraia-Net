@@ -12,7 +12,7 @@
 namespace Astraia;
 
 [Serializable]
-internal sealed class PriorityQueue(int[] score)
+internal sealed class PriorityQueue(int[] cost)
 {
     private readonly List<int> heap = new();
 
@@ -28,7 +28,7 @@ internal sealed class PriorityQueue(int[] score)
         {
             var parent = (i - 1) >> 1;
 
-            if (score[heap[parent]] <= score[heap[i]])
+            if (cost[heap[parent]] <= cost[heap[i]])
             {
                 break;
             }
@@ -67,12 +67,12 @@ internal sealed class PriorityQueue(int[] score)
 
             var smallest = left;
 
-            if (right < heap.Count && score[heap[right]] < score[heap[left]])
+            if (right < heap.Count && cost[heap[right]] < cost[heap[left]])
             {
                 smallest = right;
             }
 
-            if (score[heap[i]] <= score[heap[smallest]])
+            if (cost[heap[i]] <= cost[heap[smallest]])
             {
                 break;
             }

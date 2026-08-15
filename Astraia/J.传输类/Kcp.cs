@@ -1,11 +1,11 @@
 // *********************************************************************************
 // # Project: Astraia
 // # Unity: 6000.3.5f1
-// # Author: 云谷千羽
+// # Author: Nevin
 // # Version: 1.0.0
-// # History: 2026-08-14 20:08:13
-// # Recently: 2026-08-15 17:54:37
-// # Copyright: 2024, 云谷千羽
+// # History: 2025-08-03 02:08:22
+// # Recently: 2025-08-03 02:08:22
+// # Copyright: 2024, Nevin
 // # Description: This is an automatically generated comment.
 // *********************************************************************************
 
@@ -1411,6 +1411,6 @@ internal static unsafe partial class Kcp
 
     public static void memcpy(void* dst, void* src, nuint size)
     {
-        Unsafe.CopyBlockUnaligned(dst, src, (uint)size);
+        Buffer.MemoryCopy(src, dst, size, size);
     }
 }

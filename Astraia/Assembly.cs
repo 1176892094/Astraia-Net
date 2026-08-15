@@ -12,7 +12,6 @@
 global using System;
 global using System.Text;
 global using System.Linq;
-global using System.Xml.Serialization;
 global using System.Diagnostics;
 global using System.Collections;
 global using System.Collections.Generic;

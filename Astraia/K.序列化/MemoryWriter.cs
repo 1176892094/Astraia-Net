@@ -28,7 +28,11 @@ public class MemoryWriter : IDisposable
     {
         var count = sizeof(T);
         Resize(position + count);
-        Unsafe.WriteUnaligned(ref buffer[position], value);
+        fixed (byte* ptr = &buffer[position])
+        {
+            *(T*)ptr = value;
+        }
+
         position += count;
     }
 
