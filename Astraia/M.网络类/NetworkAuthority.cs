@@ -39,10 +39,10 @@ internal sealed class NetworkAuthority : Transport
     {
         this.isRemote = true;
         Instance.client.onConnect -= Connect;
-        Instance.client.onDisconnect -= Disconnected;
+        Instance.client.onDisconnect -= Stop;
         Instance.client.onReceive -= Receive;
         Instance.client.onConnect += Connect;
-        Instance.client.onDisconnect += Disconnected;
+        Instance.client.onDisconnect += Stop;
         Instance.client.onReceive += Receive;
         Instance.port = port;
         Instance.address = address;
@@ -77,9 +77,9 @@ internal sealed class NetworkAuthority : Transport
         this.serverId = serverId;
     }
 
-    internal void Disconnected(int serverId)
+    internal void Stop(int serverId = 0)
     {
-        if (state != State.Failure)
+        if (isSaloon)
         {
             objectId = 0;
             clients.Clear();
@@ -245,7 +245,7 @@ internal sealed class NetworkAuthority : Transport
 
     public override void Disconnect()
     {
-        if (state != State.Failure)
+        if (isSaloon)
         {
             isClient = false;
             using var writer = MemoryWriter.Pop();
