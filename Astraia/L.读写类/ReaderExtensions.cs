@@ -236,4 +236,32 @@ internal static partial class StreamExtensions
         var uri = reader.ReadString();
         return string.IsNullOrWhiteSpace(uri) ? null : new Uri(uri);
     }
+
+    public static List<Lobby> ReadLobby(this MemoryReader reader)
+    {
+        var count = reader.ReadInt32();
+        var result = new List<Lobby>(count);
+        for (int i = 0; i < count; i++)
+        {
+            var item = new Lobby();
+            item.Host = reader.ReadInt32();
+            item.Count = reader.ReadInt32();
+            item.Index = reader.ReadInt32();
+            item.Type = (Lobby.Room)reader.ReadByte();
+            item.Id = reader.ReadString();
+            item.Name = reader.ReadString();
+            item.Data = reader.ReadString();
+
+            var members = reader.ReadInt32();
+            item.Members = new List<int>(members);
+            for (int j = 0; j < members; j++)
+            {
+                item.Members.Add(reader.ReadInt32());
+            }
+
+            result.Add(item);
+        }
+
+        return result;
+    }
 }

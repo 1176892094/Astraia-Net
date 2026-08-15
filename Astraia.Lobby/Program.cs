@@ -115,14 +115,19 @@ internal static class Program
     {
         if (request.HttpMethod == "GET" && request.Url!.AbsolutePath == "/api/compressed/servers")
         {
-            var readJson = JsonSerializer.Serialize(Rooms);
-            var readData = Zip.Compress(Text.GetBytes(readJson));
-
-            response.StatusCode = (int)HttpStatusCode.OK;
-            response.ContentType = "application/octet-stream";
-            response.ContentLength64 = readData.Length;
-
-            await response.OutputStream.WriteAsync(readData, 0, readData.Length);
+            var writer = MemoryWriter.Pop();
+            writer.WriteLobby(Rooms);
+            try
+            {
+                response.StatusCode = (int)HttpStatusCode.OK;
+                response.ContentType = "application/octet-stream";
+                response.ContentLength64 = writer.position;
+                await response.OutputStream.WriteAsync(writer.buffer, 0, writer.position);
+            }
+            finally
+            {
+                MemoryWriter.Push(writer);
+            }
         }
     }
 

@@ -246,4 +246,24 @@ internal static partial class StreamExtensions
 
         writer.WriteString(value.ToString());
     }
+
+    public static void WriteLobby(this MemoryWriter writer, List<Lobby> value)
+    {
+        writer.WriteInt32(value.Count);
+        foreach (var i in value)
+        {
+            writer.WriteInt32(i.Host);
+            writer.WriteInt32(i.Count);
+            writer.WriteInt32(i.Index);
+            writer.WriteByte((byte)i.Type);
+            writer.WriteString(i.Id);
+            writer.WriteString(i.Name);
+            writer.WriteString(i.Data);
+            writer.WriteInt32(i.Members.Count);
+            foreach (var m in i.Members)
+            {
+                writer.WriteInt32(m);
+            }
+        }
+    }
 }

@@ -51,11 +51,11 @@ internal sealed class NetworkAuthority : Transport
 
     internal async void Update()
     {
-        var readText = await Host.Http.GetByteArrayAsync("http://{0}:{1}/api/compressed/servers".Format(address, port));
-        var readJson = Text.GetString(Zip.Decompress(readText));
-        var readData = System.Text.Json.JsonSerializer.Deserialize<List<Lobby>>(readJson);
-        EventManager.Invoke(new LobbyUpdate(readData));
-        Log.Info($"房间信息: {readJson}");
+        var readData = await Host.Http.GetByteArrayAsync("http://{0}:{1}/api/compressed/servers".Format(address, port));
+        using var reader = MemoryReader.Pop(readData);
+        var readList = reader.ReadLobby();
+        EventManager.Invoke(new LobbyUpdate(readList));
+        Log.Info(string.Join('\n', readList));
     }
 
     internal void Submit()
@@ -268,22 +268,33 @@ internal sealed class NetworkAuthority : Transport
 }
 
 [Serializable]
-public struct Lobby
+public record struct Lobby
 {
-    public int Host { get; set; }
-    public int Count { get; set; }
-    public int Index { get; set; }
-    public Room Type { get; set; }
-    public string Id { get; set; }
-    public string Name { get; set; }
-    public string Data { get; set; }
-    public List<int> Members { get; set; }
+    public int Host;
+    public int Count;
+    public int Index;
+    public Room Type;
+    public string Id;
+    public string Name;
+    public string Data;
+    public List<int> Members;
 
-    public enum Room : byte
+    public override string ToString()
     {
-        公开,
-        私有,
-        锁定,
+        var builder = new StringBuilder();
+        builder.Append("Host = ");
+        builder.Append(Host.ToString());
+        builder.Append(", Count = ");
+        builder.Append(Count.ToString());
+        builder.Append(", Index = ");
+        builder.Append(Index.ToString());
+        builder.Append(", Type = ");
+        builder.Append(Type.ToString());
+        builder.Append(", Id = ");
+        builder.Append(Id);
+        builder.Append(", Name = ");
+        builder.Append(Name);
+        return builder.ToString();
     }
 
     internal enum Info : byte
@@ -301,5 +312,12 @@ public struct Lobby
         断开玩家连接 = 11,
         更新房间数据 = 12,
         同步网络数据 = 13,
+    }
+
+    public enum Room : byte
+    {
+        公开,
+        私有,
+        锁定,
     }
 }
