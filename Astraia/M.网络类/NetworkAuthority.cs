@@ -51,13 +51,11 @@ internal sealed class NetworkAuthority : Transport
 
     internal async void Update()
     {
-        var texts = await Host.Http.GetStringAsync("http://{0}:{1}/api/compressed/servers".Format(address, port));
-        var xml = Zip.Decompress(texts);
-        var serializer = new XmlSerializer(typeof(List<Lobby>));
-        using var reader = new StringReader(xml);
-        var rooms = (List<Lobby>)serializer.Deserialize(reader);
-        EventManager.Invoke(new LobbyUpdate(rooms));
-        Log.Info($"房间信息: {xml}");
+        var readText = await Host.Http.GetByteArrayAsync("http://{0}:{1}/api/compressed/servers".Format(address, port));
+        var readJson = Text.GetString(Zip.Decompress(readText));
+        var readData = System.Text.Json.JsonSerializer.Deserialize<List<Lobby>>(readJson);
+        EventManager.Invoke(new LobbyUpdate(readData));
+        Log.Info($"房间信息: {readJson}");
     }
 
     internal void Submit()
@@ -272,14 +270,14 @@ internal sealed class NetworkAuthority : Transport
 [Serializable]
 public struct Lobby
 {
-    public int Host;
-    public int Count;
-    public int Index;
-    public Room Type;
-    public string Id;
-    public string Name;
-    public string Data;
-    public List<int> Members;
+    public int Host { get; set; }
+    public int Count { get; set; }
+    public int Index { get; set; }
+    public Room Type { get; set; }
+    public string Id { get; set; }
+    public string Name { get; set; }
+    public string Data { get; set; }
+    public List<int> Members { get; set; }
 
     public enum Room : byte
     {

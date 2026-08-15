@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Reflection;
 using System.Text.Json;
-using System.Xml.Serialization;
 
 namespace Astraia;
 
@@ -30,15 +29,14 @@ internal static class Program
             connection.Start(true);
             Log.Info("运行服务器...");
 
-            var option = new JsonSerializerOptions { IncludeFields = true };
             if (!File.Exists("setting.json"))
             {
-                var saveText = JsonSerializer.Serialize(new Setting(), option);
+                var saveText = JsonSerializer.Serialize(new Setting());
                 await File.WriteAllTextAsync("setting.json", saveText);
             }
 
             var readText = await File.ReadAllTextAsync("setting.json");
-            setting = JsonSerializer.Deserialize<Setting>(readText, option);
+            setting = JsonSerializer.Deserialize<Setting>(readText);
 
             Log.Info("服务器密钥：" + setting.ServerId);
 
@@ -106,25 +104,22 @@ internal static class Program
     {
         if (request.HttpMethod == "GET" && request.Url!.AbsolutePath == "/api/compressed/servers")
         {
-            var serializer = new XmlSerializer(Rooms.GetType());
-            await using var writer = new StringWriter();
-            serializer.Serialize(writer, Rooms);
-
-            var xml = Zip.Compress(writer.ToString());
-            var readBytes = Text.GetBytes(xml);
+            var readJson = JsonSerializer.Serialize(Rooms);
+            var readData = Zip.Compress(Text.GetBytes(readJson));
 
             response.StatusCode = (int)HttpStatusCode.OK;
-            response.ContentType = "application/xml; charset=utf-8";
-            response.ContentLength64 = readBytes.Length;
+            response.ContentType = "application/octet-stream";
+            response.ContentLength64 = readData.Length;
 
-            await response.OutputStream.WriteAsync(readBytes, 0, readBytes.Length);
+            await response.OutputStream.WriteAsync(readData, 0, readData.Length);
         }
     }
 
+    [Serializable]
     private class Setting
     {
-        public string ServerId = Guid.NewGuid().ToString();
-        public ushort ServerPort = 8080;
+        public string ServerId { get; set; } = Guid.NewGuid().ToString();
+        public ushort ServerPort { get; set; } = 8080;
     }
 
     public static List<Lobby> Rooms => rooms.Values.ToList();
