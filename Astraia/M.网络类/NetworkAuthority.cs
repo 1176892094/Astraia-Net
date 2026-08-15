@@ -87,7 +87,7 @@ internal sealed class NetworkAuthority : Transport
             isServer = false;
             isClient = false;
             state = State.Failure;
-            Instance.StopClient();
+            Instance.Disconnect();
             EventManager.Invoke(new LobbyDisconnect());
         }
 
@@ -243,7 +243,7 @@ internal sealed class NetworkAuthority : Transport
         Instance.SendToServer(writer);
     }
 
-    public override void StopClient()
+    public override void Disconnect()
     {
         if (state != State.Failure)
         {

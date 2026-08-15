@@ -16,7 +16,7 @@ internal abstract class Transport
     public abstract void StopServer();
     public abstract void Disconnect(int clientId);
     public abstract void StartClient();
-    public abstract void StopClient();
+    public abstract void Disconnect();
     public abstract void ClientEarlyUpdate();
     public abstract void ClientAfterUpdate();
     public abstract void ServerEarlyUpdate();
@@ -26,20 +26,20 @@ internal abstract class Transport
 [Serializable]
 internal sealed class NetworkTransport : Transport
 {
-    private new KcpClient client;
-    private new KcpServer server;
+    private KcpClient kcpClient;
+    private KcpServer kcpServer;
 
     public override void Start(bool isRemote)
     {
-        client = new KcpClient(base.client, new byte[Const.MTU_DEF]);
-        server = new KcpServer(base.server, new byte[Const.MTU_DEF]);
+        kcpClient = new KcpClient(client, new byte[Const.MTU_DEF]);
+        kcpServer = new KcpServer(server, new byte[Const.MTU_DEF]);
         if (isRemote)
         {
-            base.server.onError = OnServerError;
+            server.onError = OnServerError;
         }
         else
         {
-            base.client.onError = OnClientError;
+            client.onError = OnClientError;
         }
     }
 
@@ -58,56 +58,56 @@ internal sealed class NetworkTransport : Transport
 
     public override void SendToClient(int clientId, ArraySegment<byte> segment, int pass = Pass.KCP)
     {
-        server.Send(clientId, segment, pass);
+        kcpServer.Send(clientId, segment, pass);
     }
 
     public override void SendToServer(ArraySegment<byte> segment, int pass = Pass.KCP)
     {
-        client.Send(segment, pass);
+        kcpClient.Send(segment, pass);
     }
 
     public override void StartServer()
     {
-        server.Connect(port);
+        kcpServer.Connect(port);
     }
 
     public override void StopServer()
     {
-        server.StopServer();
+        kcpServer.StopServer();
     }
 
     public override void Disconnect(int clientId)
     {
-        server.Disconnect(clientId);
+        kcpServer.Disconnect(clientId);
     }
 
     public override void StartClient()
     {
-        client.Connect(address, port);
+        kcpClient.Connect(address, port);
     }
 
-    public override void StopClient()
+    public override void Disconnect()
     {
-        client.Disconnect();
+        kcpClient.Disconnect();
     }
 
     public override void ClientEarlyUpdate()
     {
-        client.EarlyUpdate();
+        kcpClient.EarlyUpdate();
     }
 
     public override void ClientAfterUpdate()
     {
-        client.AfterUpdate();
+        kcpClient.AfterUpdate();
     }
 
     public override void ServerEarlyUpdate()
     {
-        server.EarlyUpdate();
+        kcpServer.EarlyUpdate();
     }
 
     public override void ServerAfterUpdate()
     {
-        server.AfterUpdate();
+        kcpServer.AfterUpdate();
     }
 }

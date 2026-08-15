@@ -18,8 +18,8 @@ public static class Search
     private static readonly Dictionary<string, Assembly> assemblies = new();
     private static readonly Dictionary<string, Type> cacheTypes = new();
 
-    public const BindingFlags Static = (BindingFlags)56;
-    public const BindingFlags Instance = (BindingFlags)52;
+    public const BindingFlags Static = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+    public const BindingFlags Instance = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
 
     public static event Action<Type> OnLoad;
 
