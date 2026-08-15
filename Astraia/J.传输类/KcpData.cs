@@ -11,7 +11,7 @@
 
 namespace Astraia;
 
-internal unsafe class KcpData
+internal unsafe class KcpData : IDisposable
 {
     private static readonly Dictionary<int, SendDelegate> methods = new Dictionary<int, SendDelegate>();
     private int key;
@@ -21,26 +21,31 @@ internal unsafe class KcpData
     public uint Death => kcp->dead_link;
     public uint Count => kcp->nrcv_buf + kcp->nrcv_que + kcp->nsnd_buf + kcp->nsnd_que;
 
-    public static void Build(KcpData kcpData, SendDelegate onSend)
+    public void Build(SendDelegate onSend)
     {
-        kcpData.Release();
+        ReleaseUnmanagedResources();
 
-        int key;
+        int newKey;
         do
         {
-            key = Seed.Next();
-        } while (methods.ContainsKey(key));
+            newKey = Seed.Next();
+        } while (newKey == 0 || methods.ContainsKey(newKey));
 
-        methods.Remove(key);
-        kcpData.key = key;
-        kcpData.kcp = Kcp.ikcp_create(0, (void*)key);
-        methods.Add(key, onSend);
+        var newKcp = Kcp.ikcp_create(0, (void*)newKey);
+        if (newKcp == null)
+        {
+            return;
+        }
 
-        kcpData.kcp->dead_link = Const.DEAD_LINK;
-        Kcp.ikcp_setmtu(kcpData.kcp, Const.MTU_DEF - Const.HEAD_SIZE);
-        Kcp.ikcp_nodelay(kcpData.kcp, 1, Const.STEP_TIME, Const.FAST_SEND, 1);
-        Kcp.ikcp_wndsize(kcpData.kcp, Const.SED_WIN, Const.REV_WIN);
-        Kcp.ikcp_setoutput(kcpData.kcp, &Output);
+        key = newKey;
+        kcp = newKcp;
+
+        kcp->dead_link = Const.DEAD_LINK;
+        Kcp.ikcp_setmtu(kcp, Const.MTU_DEF - Const.HEAD_SIZE);
+        Kcp.ikcp_nodelay(kcp, 1, Const.STEP_TIME, Const.FAST_SEND, 1);
+        Kcp.ikcp_wndsize(kcp, Const.SED_WIN, Const.REV_WIN);
+        Kcp.ikcp_setoutput(kcp, &Output);
+        methods.Add(newKey, onSend);
     }
 
     private static int Output(byte* bytes, int count, IKCPCB* kcp, void* user)
@@ -92,18 +97,29 @@ internal unsafe class KcpData
         return Kcp.ikcp_peeksize(kcp);
     }
 
-    private void Release()
+    ~KcpData()
     {
-        if (kcp != null)
+        ReleaseUnmanagedResources();
+    }
+
+    private void ReleaseUnmanagedResources()
+    {
+        if (key != 0)
         {
             methods.Remove(key);
+            key = 0;
+        }
+
+        if (kcp != null)
+        {
             Kcp.ikcp_release(kcp);
             kcp = null;
         }
     }
 
-    ~KcpData()
+    public void Dispose()
     {
-        Release();
+        ReleaseUnmanagedResources();
+        GC.SuppressFinalize(this);
     }
 }

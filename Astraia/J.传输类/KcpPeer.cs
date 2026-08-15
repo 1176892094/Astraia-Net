@@ -19,7 +19,7 @@ internal sealed class KcpPeer(KcpClientEvent Event, string userName)
         pingTime = 0;
         nextTime = 0;
         waitTime = Const.WAIT_TIME;
-        KcpData.Build(kcpData, SendReliable);
+        kcpData.Build(SendReliable);
         state = State.Running;
         watch.Restart();
     }
