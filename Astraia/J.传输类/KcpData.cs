@@ -58,27 +58,27 @@ internal unsafe class KcpData : IDisposable
         return count;
     }
 
-    public int Input(byte[] buffer, int offset, int length)
+    public int Input(byte[] buffer, int offset, int count)
     {
         fixed (byte* ptr = &buffer[offset])
         {
-            return Kcp.ikcp_input(kcp, ptr, length);
+            return Kcp.ikcp_input(kcp, ptr, count);
         }
     }
 
-    public int Receive(byte[] buffer, int length)
+    public int Receive(byte[] buffer, int count)
     {
         fixed (byte* ptr = buffer)
         {
-            return Kcp.ikcp_recv(kcp, ptr, length);
+            return Kcp.ikcp_recv(kcp, ptr, count);
         }
     }
 
-    public int Send(byte[] buffer, int offset, int length)
+    public int Send(byte[] buffer, int offset, int count)
     {
         fixed (byte* ptr = &buffer[offset])
         {
-            return Kcp.ikcp_send(kcp, ptr, length);
+            return Kcp.ikcp_send(kcp, ptr, count);
         }
     }
 
