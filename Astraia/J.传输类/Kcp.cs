@@ -155,14 +155,15 @@ internal static unsafe partial class Kcp
         ikcp_free(seg);
     }
 
-    public static int ikcp_output(IKCPCB* kcp, void* data, int size)
+    public static int ikcp_output(IKCPCB* kcp, byte* data, int size, SendDelegate output)
     {
         if (size == 0)
         {
             return 0;
         }
 
-        return kcp->output((byte*)data, size, kcp, kcp->user);
+        output(data, size);
+        return size;
     }
 
     public static IKCPCB* ikcp_create(uint conv, void* user)
@@ -226,7 +227,6 @@ internal static unsafe partial class Kcp
         kcp->nocwnd = 0;
         kcp->xmit = 0;
         kcp->dead_link = IKCP_DEADLINK;
-        kcp->output = null;
 
         return kcp;
     }
@@ -283,11 +283,6 @@ internal static unsafe partial class Kcp
             kcp->acklist = null;
             ikcp_free(kcp);
         }
-    }
-
-    public static void ikcp_setoutput(IKCPCB* kcp, delegate* managed<byte*, int, IKCPCB*, void*, int> output)
-    {
-        kcp->output = output;
     }
 
     public static int ikcp_recv(IKCPCB* kcp, byte* buffer, int len)
@@ -922,7 +917,7 @@ internal static unsafe partial class Kcp
         return 0;
     }
 
-    public static void ikcp_flush(IKCPCB* kcp)
+    public static void ikcp_flush(IKCPCB* kcp, SendDelegate output)
     {
         var current = kcp->current;
         var buffer = kcp->buffer;
@@ -955,7 +950,7 @@ internal static unsafe partial class Kcp
             size = (int)(ptr - buffer);
             if (size + (int)IKCP_OVERHEAD > (int)kcp->mtu)
             {
-                ikcp_output(kcp, buffer, size);
+                ikcp_output(kcp, buffer, size, output);
                 ptr = buffer;
             }
 
@@ -1004,7 +999,7 @@ internal static unsafe partial class Kcp
             size = (int)(ptr - buffer);
             if (size + (int)IKCP_OVERHEAD > (int)kcp->mtu)
             {
-                ikcp_output(kcp, buffer, size);
+                ikcp_output(kcp, buffer, size, output);
                 ptr = buffer;
             }
 
@@ -1017,7 +1012,7 @@ internal static unsafe partial class Kcp
             size = (int)(ptr - buffer);
             if (size + (int)IKCP_OVERHEAD > (int)kcp->mtu)
             {
-                ikcp_output(kcp, buffer, size);
+                ikcp_output(kcp, buffer, size, output);
                 ptr = buffer;
             }
 
@@ -1115,7 +1110,7 @@ internal static unsafe partial class Kcp
 
                 if (size + need > (int)kcp->mtu)
                 {
-                    ikcp_output(kcp, buffer, size);
+                    ikcp_output(kcp, buffer, size, output);
                     ptr = buffer;
                 }
 
@@ -1137,7 +1132,7 @@ internal static unsafe partial class Kcp
         size = (int)(ptr - buffer);
         if (size > 0)
         {
-            ikcp_output(kcp, buffer, size);
+            ikcp_output(kcp, buffer, size, output);
         }
 
         if (change != 0)
@@ -1172,7 +1167,7 @@ internal static unsafe partial class Kcp
         }
     }
 
-    public static void ikcp_update(IKCPCB* kcp, uint current)
+    public static void ikcp_update(IKCPCB* kcp, uint current, SendDelegate output)
     {
         int slap;
 
@@ -1200,7 +1195,7 @@ internal static unsafe partial class Kcp
                 kcp->ts_flush = kcp->current + kcp->interval;
             }
 
-            ikcp_flush(kcp);
+            ikcp_flush(kcp, output);
         }
     }
 
@@ -1394,7 +1389,6 @@ internal unsafe struct IKCPCB
     public int fastresend;
     public int fastlimit;
     public int nocwnd, stream;
-    public delegate* managed<byte*, int, IKCPCB*, void*, int> output;
 }
 
 internal static unsafe partial class Kcp
