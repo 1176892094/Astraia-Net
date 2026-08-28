@@ -32,19 +32,9 @@ public sealed class AStar : Pathfinding
 
     public IList<Position> Rebuild(int sx, int sy, int ex, int ey)
     {
-        if (!Contains(sx, sy) || !Contains(ex, ey))
-        {
-            return Array.Empty<Position>();
-        }
-
         var s = Index(sx, sy);
         var e = Index(ex, ey);
-
-        if (costs[s] >= INF || costs[e] >= INF)
-        {
-            return Array.Empty<Position>();
-        }
-
+        
         for (var i = 0; i < gScore.Length; i++)
         {
             parent[i] = -1;
