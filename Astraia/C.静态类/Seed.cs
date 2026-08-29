@@ -63,6 +63,32 @@ public static class Seed
         Random.NextBytes(bytes);
     }
 
+    public static T Next<T>(T[] source)
+    {
+        return source[Next(0, source.Length - 1)];
+    }
+
+    public static T Next<T>(List<T> source)
+    {
+        return source[Next(0, source.Count - 1)];
+    }
+
+    public static T Next<T>(IEnumerable<T> source)
+    {
+        var result = default(T);
+        var count = 0;
+
+        foreach (var item in source)
+        {
+            if (Next(0, ++count) == 0)
+            {
+                result = item;
+            }
+        }
+
+        return result;
+    }
+
     public static T Next<T>() where T : unmanaged, Enum
     {
         return Enum<T>.Values[Random.Next(Enum<T>.Values.Length)];

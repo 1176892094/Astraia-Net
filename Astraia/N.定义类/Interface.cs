@@ -11,6 +11,18 @@
 
 namespace Astraia;
 
+public interface IDontDestroy;
+
+public interface IDequeue
+{
+    void Dequeue();
+}
+
+public interface IEnqueue
+{
+    void Enqueue();
+}
+
 public interface IStartClient
 {
     void OnStartClient();
