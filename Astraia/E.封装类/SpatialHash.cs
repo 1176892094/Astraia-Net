@@ -17,9 +17,31 @@ public sealed class SpatialHash<T>
     private readonly Dictionary<int, HashSet<T>> buckets = new();
     private readonly Dictionary<T, int> objects = new();
 
+    private static int Compress(int x, int y)
+    {
+        return (x << 16) | (y & 0xFFFF);
+    }
+
+    private static int Compress(Position position)
+    {
+        return Compress(position.x.FloorToInt(), position.y.FloorToInt());
+    }
+
+    private void Remove(T item, int node)
+    {
+        if (buckets.TryGetValue(node, out var items))
+        {
+            items.Remove(item);
+            if (items.Count == 0)
+            {
+                buckets.Remove(node);
+            }
+        }
+    }
+
     public void Insert(T item, Position center)
     {
-        var node = center.GetHashCode();
+        var node = Compress(center);
         if (!buckets.TryGetValue(node, out var items))
         {
             items = new HashSet<T>();
@@ -34,15 +56,7 @@ public sealed class SpatialHash<T>
     {
         if (objects.TryGetValue(item, out var node))
         {
-            if (buckets.TryGetValue(node, out var items))
-            {
-                items.Remove(item);
-                if (items.Count == 0)
-                {
-                    buckets.Remove(node);
-                }
-            }
-
+            Remove(item, node);
             objects.Remove(item);
         }
     }
@@ -51,17 +65,10 @@ public sealed class SpatialHash<T>
     {
         if (objects.TryGetValue(item, out var oldNode))
         {
-            var newNode = center.GetHashCode();
+            var newNode = Compress(center);
             if (oldNode != newNode)
             {
-                if (buckets.TryGetValue(oldNode, out var oldItems))
-                {
-                    oldItems.Remove(item);
-                    if (oldItems.Count == 0)
-                    {
-                        buckets.Remove(oldNode);
-                    }
-                }
+                Remove(item, oldNode);
 
                 if (!buckets.TryGetValue(newNode, out var newItems))
                 {
@@ -78,16 +85,19 @@ public sealed class SpatialHash<T>
     public void Query(Position center, int extentX, int extentY, HashSet<T> items)
     {
         items.Clear();
-        var minX = center.x.FloorToInt() - extentX;
-        var maxX = center.x.FloorToInt() + extentX;
-        var minY = center.y.FloorToInt() - extentY;
-        var maxY = center.y.FloorToInt() + extentY;
+        var centerX = center.x.FloorToInt();
+        var centerY = center.y.FloorToInt();
+
+        var minX = centerX - extentX;
+        var maxX = centerX + extentX;
+        var minY = centerY - extentY;
+        var maxY = centerY + extentY;
 
         for (var x = minX; x <= maxX; x++)
         {
             for (var y = minY; y <= maxY; y++)
             {
-                var node = new Position(x, y).GetHashCode();
+                var node = Compress(x, y);
                 if (buckets.TryGetValue(node, out var copies))
                 {
                     foreach (var item in copies)
@@ -101,11 +111,6 @@ public sealed class SpatialHash<T>
 
     public void Clear()
     {
-        foreach (var bucket in buckets.Values)
-        {
-            bucket.Clear();
-        }
-
         buckets.Clear();
         objects.Clear();
     }
