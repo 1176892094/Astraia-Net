@@ -21,27 +21,37 @@ public sealed class AStar : Pathfinding
     private int[] fScore;
     private bool[] closed;
 
+    private readonly List<int> indices = new();
+    private readonly List<Position> copied = new();
+
     public AStar(int width, int height, int[] costs) : base(width, height, costs)
     {
         parent = new int[width * height];
         gScore = new int[width * height];
         fScore = new int[width * height];
         closed = new bool[width * height];
+
+        Array.Fill(parent, -1);
+        Array.Fill(gScore, INF);
+        Array.Fill(fScore, INF);
         opened = new PriorityQueue(fScore);
     }
 
     public IList<Position> Rebuild(int sx, int sy, int ex, int ey)
     {
-        var s = Index(sx, sy);
-        var e = Index(ex, ey);
-        
-        for (var i = 0; i < gScore.Length; i++)
+        foreach (var i in indices)
         {
             parent[i] = -1;
             gScore[i] = INF;
             fScore[i] = INF;
             closed[i] = false;
         }
+
+        indices.Clear();
+
+        var s = Index(sx, sy);
+        var e = Index(ex, ey);
+        indices.Add(s);
 
         gScore[s] = 0;
         fScore[s] = Heuristic(s, e);
@@ -87,6 +97,11 @@ public sealed class AStar : Pathfinding
                 var gCost = gScore[i] + n.cost * costs[j];
                 if (gCost < gScore[j])
                 {
+                    if (gScore[j] == INF)
+                    {
+                        indices.Add(j);
+                    }
+
                     parent[j] = i;
                     gScore[j] = gCost;
                     fScore[j] = gCost + Heuristic(j, e);
@@ -117,8 +132,7 @@ public sealed class AStar : Pathfinding
 
     private List<Position> Reconstruct(int e)
     {
-        var copied = new List<Position>();
-
+        copied.Clear();
         while (e != -1)
         {
             copied.Add(new Position(e % width, e / width));
