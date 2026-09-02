@@ -111,5 +111,3 @@ public static class NetworkMessage<T> where T : struct, IMessage
         });
     }
 }
-
-public interface IMessage;

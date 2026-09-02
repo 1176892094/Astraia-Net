@@ -11,6 +11,8 @@
 
 namespace Astraia;
 
+public readonly record struct NetworkVariable(uint objectId,  byte moduleId);
+
 public readonly record struct LobbyDisconnect : IEvent;
 
 public readonly record struct LobbyUpdate(List<Lobby> rooms) : IEvent;
@@ -23,9 +25,9 @@ public readonly record struct ServerDisconnect(int id) : IEvent;
 
 public readonly record struct ServerReady(int id) : IEvent;
 
-public readonly record struct ClientConnect(int id)  : IEvent;
+public readonly record struct ClientConnect(int id) : IEvent;
 
-public readonly record struct ClientDisconnect(int id)  : IEvent;
+public readonly record struct ClientDisconnect(int id) : IEvent;
 
 public readonly record struct ServerLoadScene(string sceneName) : IEvent;
 
@@ -38,6 +40,3 @@ public readonly record struct ClientSceneLoaded(string sceneName) : IEvent;
 public readonly record struct ServerResponse(string address, ushort port) : IEvent;
 
 public readonly record struct PingUpdate(double pingTime) : IEvent;
-
-
-

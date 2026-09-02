@@ -11,6 +11,10 @@
 
 namespace Astraia;
 
+public interface ITween;
+
+public interface IMessage;
+
 public interface IDontDestroy;
 
 public interface IDequeue
