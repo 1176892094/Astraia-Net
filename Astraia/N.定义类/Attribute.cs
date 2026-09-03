@@ -48,10 +48,9 @@ public sealed class UIPathAttribute(string asset) : Attribute
 }
 
 [AttributeUsage(AttributeTargets.Class)]
-public sealed class UIMaskAttribute(int layer, int group = 0) : Attribute
+public sealed class UIMaskAttribute(int state) : Attribute
 {
-    public readonly int layer = layer;
-    public readonly int group = group;
+    public readonly int state = state;
 }
 
 [AttributeUsage(AttributeTargets.Class)]
