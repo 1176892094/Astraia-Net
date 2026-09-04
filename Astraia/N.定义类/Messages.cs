@@ -11,7 +11,11 @@
 
 namespace Astraia;
 
-public readonly record struct NetworkVariable(uint objectId,  byte moduleId);
+public readonly record struct NetworkVariable(uint objectId, byte moduleId);
+
+public readonly record struct OnEarlyUpdate : IEvent;
+
+public readonly record struct OnAfterUpdate : IEvent;
 
 public readonly record struct LobbyDisconnect : IEvent;
 

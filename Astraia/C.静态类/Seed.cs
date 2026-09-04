@@ -63,12 +63,7 @@ public static class Seed
         Random.NextBytes(bytes);
     }
 
-    public static T Next<T>(T[] source)
-    {
-        return source[Next(0, source.Length - 1)];
-    }
-
-    public static T Next<T>(List<T> source)
+    public static T Next<T>(IList<T> source)
     {
         return source[Next(0, source.Count - 1)];
     }
