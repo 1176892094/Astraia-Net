@@ -2,10 +2,6 @@
 
 纯 C# 的 Astraia 核心运行时与大厅服务器。不依赖 Unity，客户端、服务器与工具链复用同一套核心代码。
 
-## 相关链接
-
-- **博客**：[云谷千羽的博客](https://1176892094.github.io/) —— Astraia 与 Astraia-Net 的工程笔记、模块拆解与网络同步实践。
-
 ## 架构图
 
 ```mermaid
@@ -67,3 +63,10 @@ dotnet Astraia.Lobby.dll
 ```
 
 构建核心库后，`Astraia.dll` 会自动复制到 Astraia（Unity 框架）的 Plugins 目录，供游戏客户端复用。
+
+## 相关文档
+
+- [云谷千羽](https://1176892094.github.io/) —— Astraia 与 Astraia-Net 的工程笔记、模块拆解与网络同步实践。
+
+
+
