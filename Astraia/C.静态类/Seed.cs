@@ -65,7 +65,7 @@ public static class Seed
 
     public static T Next<T>(IList<T> source)
     {
-        return source[Next(0, source.Count - 1)];
+        return source[Next(0, source.Count)];
     }
 
     public static T Next<T>(IEnumerable<T> source)
