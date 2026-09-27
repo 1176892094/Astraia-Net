@@ -54,13 +54,12 @@ public sealed class UIMaskAttribute(int state) : Attribute
 }
 
 [AttributeUsage(AttributeTargets.Class)]
-public sealed class UIRectAttribute(int col, int row, float width, float height, float offset, bool rotation = true, bool selected = false) : Attribute
+public sealed class UIRectAttribute(int col, int row, float width, float height, float offset, int opcode = 0) : Attribute
 {
     public readonly int row = row;
     public readonly int col = col;
+    public readonly int opcode = opcode;
     public readonly float width = width;
     public readonly float height = height;
     public readonly float offset = offset;
-    public readonly bool rotation = rotation;
-    public readonly bool selected = selected;
 }

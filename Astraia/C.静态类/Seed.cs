@@ -19,9 +19,9 @@ public static class Seed
 
     private static Random Random => random ??= new Random(Environment.TickCount);
 
-    public static int sign => Random.Next(2) == 0 ? 1 : -1;
-
-    public static float value => (float)Random.NextDouble();
+    public static int signValue => Random.Next(2) == 0 ? 1 : -1;
+    public static float floatValue => (float)Random.NextDouble();
+    public static float percentValue => (float)Random.NextDouble() * 100f;
 
     public static int Next()
     {
@@ -40,7 +40,7 @@ public static class Seed
 
     public static int NextSign(int min, int max)
     {
-        return Random.Next(min, max) * sign;
+        return Random.Next(min, max) * signValue;
     }
 
     public static Fixation Next(Fixation max)
@@ -55,7 +55,7 @@ public static class Seed
 
     public static Fixation NextSign(Fixation min, Fixation max)
     {
-        return new Fixation(Random.Next(min.value, max.value)) * sign;
+        return new Fixation(Random.Next(min.value, max.value)) * signValue;
     }
 
     public static void NextBytes(byte[] bytes)
