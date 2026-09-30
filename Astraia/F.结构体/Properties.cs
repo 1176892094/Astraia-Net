@@ -12,26 +12,26 @@
 namespace Astraia;
 
 [Serializable]
-public readonly record struct Properties<T>(Fixation[] properties) where T : unmanaged, Enum
+public readonly record struct Properties<T>(int[] properties) where T : unmanaged, Enum
 {
     public float Get(T key)
     {
-        return properties[key.Index()];
+        return properties[key.Index()] / 1000F;
     }
 
     public void Set(T key, float value)
     {
-        properties[key.Index()] = value;
+        properties[key.Index()] = (int)Math.Round(value * 1000);
     }
 
     public void Add(T key, float value)
     {
-        properties[key.Index()] += value;
+        properties[key.Index()] += (int)Math.Round(value * 1000);
     }
 
     public void Sub(T key, float value)
     {
-        properties[key.Index()] -= value;
+        properties[key.Index()] -= (int)Math.Round(value * 1000);
     }
 
     public void Clear()
@@ -41,6 +41,6 @@ public readonly record struct Properties<T>(Fixation[] properties) where T : unm
 
     public static Properties<T> Create()
     {
-        return new Properties<T>(new Fixation[Seed.Count<T>()]);
+        return new Properties<T>(new int[Seed.Count<T>()]);
     }
 }
