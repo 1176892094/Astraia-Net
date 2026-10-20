@@ -30,6 +30,7 @@ public struct XorEx : IEquatable<XorEx>
 
             if (buffer != GetHashCode())
             {
+                EventManager.Invoke(new VariableModified());
                 throw new InvalidOperationException();
             }
 

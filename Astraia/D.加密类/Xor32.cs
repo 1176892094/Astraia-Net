@@ -27,6 +27,7 @@ public struct Xor32 : IEquatable<Xor32>
             var value = origin ^ offset;
             if (buffer != ((offset >> 8) ^ value))
             {
+                EventManager.Invoke(new VariableModified());
                 throw new InvalidOperationException();
             }
 
