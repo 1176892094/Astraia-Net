@@ -14,7 +14,7 @@ namespace Astraia;
 [Serializable]
 public readonly record struct Fixation(int value)
 {
-    private const int BIT = 12;
+    private const int BIT = 16;
     private const int FIX = 1 << BIT;
 
     public static readonly Fixation One = new(FIX);
@@ -139,6 +139,26 @@ public readonly record struct Fixation(int value)
     public static int Sign(Fixation value)
     {
         return value > 0 ? 1 : value < 0 ? -1 : 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Fixation Lerp(Fixation from, Fixation to, Fixation t)
+    {
+        return from + (to - from) * Max(Zero, Min(One, t));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Fixation InverseLerp(Fixation from, Fixation to, Fixation value)
+    {
+        return from != to ? Max(Zero, Min(One, (value - from) / (to - from))) : Zero;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Fixation SmoothStep(Fixation from, Fixation to, Fixation t)
+    {
+        t = Max(Zero, Min(One, t));
+        t = t * t * (3 * One - 2 * t);
+        return from + (to - from) * t;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
