@@ -14,19 +14,16 @@ namespace Astraia;
 [Serializable]
 public sealed class Tween : Async
 {
-    private int easeType;
-    private float progress;
-    private Action<float> onUpdate;
+    private Fixation progress;
+    private Action<Fixation> onUpdate;
 
-    internal static Tween Create(object owner, float duration)
+    internal static Tween Create(object owner, Fixation duration)
     {
         var item = HeapManager.Dequeue<Tween>();
         item.state = 0;
         item.owner = owner;
         item.progress = 0;
-        item.easeType = 0;
         item.duration = duration;
-        item.waitTime = TimeManager.renderTime;
         TimeManager.Register(item);
         return item;
     }
@@ -39,17 +36,18 @@ public sealed class Tween : Async
         HeapManager.Enqueue(this);
     }
 
-    protected override void Update(float elapseTime)
+    protected override void Update(Fixation elapseTime)
     {
-        if (waitTime < elapseTime)
+        var startTime = waitTime - duration;
+        if (startTime < elapseTime)
         {
-            progress = (elapseTime - waitTime) / duration;
-            if (progress > 1)
+            progress = (elapseTime - startTime) / duration;
+            if (progress >= 1)
             {
                 progress = 1;
             }
 
-            onUpdate(Evaluate(progress));
+            onUpdate(progress);
             if (progress >= 1)
             {
                 Interrupt(State.Success);
@@ -57,44 +55,9 @@ public sealed class Tween : Async
         }
     }
 
-    public Tween OnUpdate(Action<float> update)
+    public Tween OnUpdate(Action<Fixation> update)
     {
         onUpdate += update;
         return this;
     }
-
-    public Tween Ease(int ease = Astraia.Ease.Linear)
-    {
-        easeType = ease;
-        return this;
-    }
-
-    private float Evaluate(float t)
-    {
-        switch (easeType)
-        {
-            case Astraia.Ease.InQuad:
-                return t * t;
-            case Astraia.Ease.OutQuad:
-                return t * (2 - t);
-            case Astraia.Ease.InOutQuad:
-                return t < 0.5f ? 2 * t * t : -1 + (4 - 2 * t) * t;
-            case Astraia.Ease.SmoothStep:
-                return t * t * (3 - 2 * t);
-            case Astraia.Ease.PingPong:
-                return t < 0.5f ? t * 2 : 2 - t * 2;
-        }
-
-        return t;
-    }
-}
-
-public static class Ease
-{
-    public const int Linear = 0; // 匀速
-    public const int InQuad = 1; // 先慢后快
-    public const int OutQuad = 2; //先快后慢
-    public const int InOutQuad = 3; //慢快慢
-    public const int SmoothStep = 4; //慢快慢
-    public const int PingPong = 5; // 往返
 }

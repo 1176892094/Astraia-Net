@@ -19,15 +19,14 @@ public abstract class Async : IAsync, INotifyCompletion
 
     protected State state;
     protected object owner;
-    protected float waitTime;
-    protected float duration;
+    protected Fixation waitTime;
+    protected Fixation duration;
 
     private Action onWaitable;
     private Action onComplete;
 
     public bool IsCompleted => state != State.Running;
-
-    protected abstract void Update(float elapseTime);
+    protected abstract void Update(Fixation elapseTime);
     protected abstract void Release();
 
     public void Interrupt(State value = State.Failure)
@@ -74,7 +73,7 @@ public abstract class Async : IAsync, INotifyCompletion
     int IAsync.Id { get; set; }
     int IAsync.Index { get; set; }
 
-    void IAsync.Update(float elapseTime)
+    void IAsync.Update(Fixation elapseTime)
     {
         if (owner.GetHashCode() == 0)
         {
@@ -83,6 +82,11 @@ public abstract class Async : IAsync, INotifyCompletion
         }
 
         Update(elapseTime);
+    }
+
+    void IAsync.Reload(Fixation elapseTime)
+    {
+        waitTime = elapseTime + duration;
     }
 
     void INotifyCompletion.OnCompleted(Action waitable)

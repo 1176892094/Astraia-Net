@@ -13,7 +13,7 @@ namespace Astraia;
 
 public static class TimeManager
 {
-    private const int LENGTH = 1024;
+    private const int LENGTH = 256;
     private const int RENDER = 0;
     private const int PHYSIC = 1;
     private const int ACCEPT = 2;
@@ -25,9 +25,9 @@ public static class TimeManager
     private static readonly IAsync[] items = new IAsync[LENGTH * 3];
     private static readonly int[] counts = new int[3];
 
-    public static Fixation renderTime;
-    public static Fixation physicTime;
-    public static Fixation acceptTime;
+    private static Fixation renderTime;
+    private static Fixation physicTime;
+    private static Fixation acceptTime;
 
     public static void RenderUpdate(Fixation elapseTime)
     {
@@ -105,6 +105,7 @@ public static class TimeManager
             Register(item);
         }
 
+        item.Reload(renderTime);
         return item;
     }
 
@@ -117,6 +118,7 @@ public static class TimeManager
             Register(item);
         }
 
+        item.Reload(physicTime);
         return item;
     }
 
@@ -129,6 +131,7 @@ public static class TimeManager
             Register(item);
         }
 
+        item.Reload(acceptTime);
         return item;
     }
 }
@@ -137,5 +140,6 @@ internal interface IAsync
 {
     int Id { get; set; }
     int Index { get; set; }
-    void Update(float elapseTime);
+    void Update(Fixation elapseTime);
+    void Reload(Fixation elapseTime);
 }

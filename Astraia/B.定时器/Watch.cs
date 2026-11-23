@@ -17,14 +17,13 @@ public sealed class Watch : Async
     private int progress;
     private Action onUpdate;
 
-    internal static Watch Create(object owner, float duration)
+    internal static Watch Create(object owner, Fixation duration)
     {
         var item = HeapManager.Dequeue<Watch>();
         item.state = 0;
         item.owner = owner;
         item.progress = 1;
         item.duration = duration;
-        item.waitTime = TimeManager.renderTime + duration;
         TimeManager.Register(item);
         return item;
     }
@@ -37,7 +36,7 @@ public sealed class Watch : Async
         HeapManager.Enqueue(this);
     }
 
-    protected override void Update(float elapseTime)
+    protected override void Update(Fixation elapseTime)
     {
         if (waitTime <= elapseTime)
         {
@@ -61,14 +60,14 @@ public sealed class Watch : Async
         return this;
     }
 
-    public Watch Set(float interval)
+    public Watch Set(Fixation interval)
     {
         waitTime = waitTime - duration + interval;
         duration = interval;
         return this;
     }
 
-    public Watch Add(float interval)
+    public Watch Add(Fixation interval)
     {
         waitTime += interval;
         return this;
